@@ -456,6 +456,29 @@ function build_luna-sysmgr
 
 }
 
+#########################
+#  Fetch and build nodejs
+#########################
+function build_nodejs
+{
+    do_fetch openwebos/nodejs $1 nodejs versions/
+    mkdir -p $BASE/nodejs/build
+    cd $BASE/nodejs/build
+    cmake .. -DNO_TESTS=True -DNO_UTILS=True -DCMAKE_INSTALL_PREFIX=${LUNA_STAGING} -DCMAKE_BUILD_TYPE=Release
+    make $JOBS
+    make install
+
+    # stage
+    mkdir -p ${LUNA_STAGING}/bin/nodejs/bin
+    install -m 755 tools/node-waf ${LUNA_STAGING}/bin/nodejs/bin
+
+    mkdir -p ${LUNA_STAGING}/bin/nodejs/lib/node/wafadmin
+    tar cf - tools/wafadmin  | tar xf - --strip-components 2 -C ${LUNA_STAGING}/bin/nodejs/lib/node/wafadmin
+
+    # install
+    #tools/waf-light install -vv
+}
+
 ###############
 # build wrapper
 ###############
@@ -534,6 +557,7 @@ build luna-sysmgr-ipc-messages 0.90
 build enyo 128.2
 build core-apps 1.0
 build luna-sysmgr $LSM_TAG
+build nodejs 0.4.12-webos2
 
 echo ""
 echo "Complete. "
