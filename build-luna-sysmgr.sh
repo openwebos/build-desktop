@@ -539,9 +539,9 @@ set -x
 if [ ! -d "$BASE/luna-sysmgr" ] || [ ! -d "$BASE/tarballs" ] || [ ! -e "$BASE/tarballs/luna-sysmgr_${LSM_TAG}.zip" ] ; then
     do_fetch openwebos/luna-sysmgr ${LSM_TAG} luna-sysmgr
 fi
-if [ -d $BASE/luna-sysmgr ] ; then
-    rm -f $BASE/luna-sysmgr/luna-desktop-build.stamp
-fi
+#if [ -d $BASE/luna-sysmgr ] ; then
+#    rm -f $BASE/luna-sysmgr/luna-desktop-build.stamp
+#fi
 
 build cjson 35
 build pbnjson 0.2
