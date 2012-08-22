@@ -214,6 +214,11 @@ function build_qt4
     cd $BASE/qt-build-desktop
     make $JOBS
     make install
+
+    # Make alias to moc for BrowserServer build
+    # (Could also fix w/sed in BrowserServer build for Makefile.Ubuntu)
+    cd ${LUNA_STAGING}/bin
+    ln -s moc-palm moc
 }
 
 ################################
@@ -456,6 +461,89 @@ function build_luna-sysmgr
 
 }
 
+#####################################
+#  Fetch and build WebKitSupplemental
+#####################################
+function build_WebKitSupplemental
+{
+    do_fetch isis-project/WebKitSupplemental $1 WebKitSupplemental
+    cd $BASE/WebKitSupplemental
+    export QTDIR=$BASE/qt-build-desktop
+    export QMAKE=$LUNA_STAGING/bin/qmake-palm
+    export QMAKEPATH=$WEBKIT_DIR/Tools/qmake
+    export QT_INSTALL_PREFIX=$LUNA_STAGING
+    export STAGING_DIR=${LUNA_STAGING}
+    export STAGING_INCDIR="${LUNA_STAGING}/include"
+    export STAGING_LIBDIR="${LUNA_STAGING}/lib"
+    $LUNA_STAGING/bin/qmake-palm
+    make $JOBS -f Makefile
+    make $JOBS -e PREFIX=$LUNA_STAGING -f Makefile install BUILD_TYPE=release
+}
+
+################################
+#  Fetch and build AdapterBase
+################################
+function build_AdapterBase
+{
+    do_fetch isis-project/AdapterBase $1 AdapterBase
+    cd $BASE/AdapterBase
+    export QMAKE=$LUNA_STAGING/bin/qmake-palm
+    export QMAKEPATH=$WEBKIT_DIR/Tools/qmake
+    $LUNA_STAGING/bin/qmake-palm
+    make $JOBS -f Makefile
+    make -f Makefile install
+    #make $JOBS -e PREFIX=$LUNA_STAGING -f Makefile.Ubuntu install BUILD_TYPE=release
+}
+
+################################
+#  Fetch and build BrowserServer
+################################
+function build_BrowserServer
+{
+    do_fetch isis-project/BrowserServer $1 BrowserServer
+    cd $BASE/BrowserServer
+    export QT_INSTALL_PREFIX=$LUNA_STAGING
+    export STAGING_DIR=${LUNA_STAGING}
+    export STAGING_INCDIR="${LUNA_STAGING}/include"
+    export STAGING_LIBDIR="${LUNA_STAGING}/lib"
+    # link fails without -rpath-link to help liblunaservice find libcjson
+    export LDFLAGS="-Wl,-rpath-link $LUNA_STAGING/lib"
+    make $JOBS -e PREFIX=$LUNA_STAGING -f Makefile.Ubuntu all BUILD_TYPE=release
+
+    # stage files
+    make -e PREFIX=$LUNA_STAGING -f Makefile.Ubuntu stage BUILD_TYPE=release
+    #make -f Makefile.Ubuntu stage BUILD_TYPE=release
+
+    #cp release-x86/BrowserServer $LUNA_STAGING/bin
+}
+
+#################################
+#  Fetch and build BrowserAdapter 
+#################################
+function build_BrowserAdapter
+{
+    do_fetch isis-project/BrowserAdapter $1 BrowserAdapter
+    cd $BASE/BrowserAdapter
+    export QT_INSTALL_PREFIX=$LUNA_STAGING
+    export STAGING_DIR=${LUNA_STAGING}
+    export STAGING_INCDIR="${LUNA_STAGING}/include"
+    export STAGING_LIBDIR="${LUNA_STAGING}/lib"
+
+    # BrowserAdapter generates a few warnings which will kill the build if we don't turn off -Werror
+    sed -i 's/-Werror//' Makefile.inc
+
+    #make $JOBS -f Makefile.Ubuntu BUILD_TYPE=release
+    make $JOBS -e PREFIX=$LUNA_STAGING -f Makefile.Ubuntu all BUILD_TYPE=release
+
+    # stage files
+    make -e PREFIX=$LUNA_STAGING -f Makefile.Ubuntu stage BUILD_TYPE=release
+
+    # TODO: Need to install files (maybe more than just these) in BrowserAdapterData...
+    #mkdir -p $LUNA_STAGING/lib/BrowserPlugins/BrowserAdapterData
+    #cp data/launcher-bookmark-alpha.png $LUNA_STAGING/lib/BrowserPlugins/BrowserAdapterData
+    #cp data/launcher-bookmark-overlay.png $LUNA_STAGING/lib/BrowserPlugins/BrowserAdapterData
+}
+
 #########################
 #  Fetch and build nodejs
 #########################
@@ -557,6 +645,10 @@ build luna-sysmgr-ipc-messages 0.90
 build enyo 128.2
 build core-apps 1.0
 build luna-sysmgr $LSM_TAG
+build WebKitSupplemental 0.4
+build AdapterBase 0.2
+build BrowserServer 0.4
+build BrowserAdapter 0.3
 build nodejs 0.4.12-webos2
 
 echo ""
