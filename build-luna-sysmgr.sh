@@ -501,6 +501,12 @@ function build_AdapterBase
 function build_BrowserServer
 {
     do_fetch isis-project/BrowserServer $1 BrowserServer
+
+    # Make sure alias to moc exists for BrowserServer build
+    # (Could also fix using sed on Makefile.Ubuntu)
+    cd ${LUNA_STAGING}/bin
+    [ -x moc ] || ln -s moc-palm moc
+
     cd $BASE/BrowserServer
     export QT_INSTALL_PREFIX=$LUNA_STAGING
     export STAGING_DIR=${LUNA_STAGING}
