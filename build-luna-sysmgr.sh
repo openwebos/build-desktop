@@ -17,7 +17,7 @@
 #
 # LICENSE@@@
 
-export LSM_TAG="0.823"
+export LSM_TAG="0.824"
 
 if [ "$1" = "clean" ] ; then
   export SKIPSTUFF=0
