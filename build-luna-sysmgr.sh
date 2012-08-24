@@ -294,18 +294,23 @@ function build_webkit
     ./Tools/Scripts/build-webkit --qt \
         --release \
         --no-video \
+        --fullscreen-api \
         --no-3d-canvas \
         --only-webkit \
         --no-webkit2 \
         --qmake="${QMAKE}" \
         --makeargs="${JOBS}" \
-        --makeargs="${PARALLEL_MAKE}" \
         --qmakearg="DEFINES+=MACHINE_DESKTOP" \
         --qmakearg="DEFINES+=ENABLE_PALM_SERVICE_BRIDGE=1" \
         --qmakearg="DEFINES+=PALM_DEVICE" \
         --qmakearg="DEFINES+=XP_UNIX" \
         --qmakearg="DEFINES+=XP_WEBOS" \
-        --qmakearg="DEFINES+=QT_WEBOS"
+        --qmakearg="DEFINES+=QT_WEBOS" \
+        --qmakearg="DEFINES+=WTF_USE_ZLIB=1"
+
+        ### TODO: To support video in browser, change --no-video to --video and add these these two lines
+        #--qmakearg="DEFINES+=WTF_USE_GSTREAMER=1" \
+        #--qmakearg="DEFINES+=ENABLE_GLIB_SUPPORT=1"
 
     if [ "$?" != "0" ] ; then
        echo Failed to make $NAME
