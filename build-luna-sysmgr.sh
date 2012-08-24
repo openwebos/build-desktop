@@ -654,7 +654,7 @@ build webkit 0.3
 build luna-sysmgr-ipc 0.90
 build luna-sysmgr-ipc-messages 0.90
 build enyo 128.2
-build core-apps 1.0
+build core-apps 1.0.1
 build luna-sysmgr $LSM_TAG
 build WebKitSupplemental 0.4
 build AdapterBase 0.2
