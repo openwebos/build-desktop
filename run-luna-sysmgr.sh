@@ -17,10 +17,17 @@
 #
 # LICENSE@@@
 
-STAGING_DIR="${HOME}/luna-desktop-binaries/staging"
+set -x
+
+BASE="${HOME}/luna-desktop-binaries"
+ROOTFS="${BASE}/rootfs"
+LUNA_STAGING="${BASE}/staging"
+
+STAGING_DIR="${LUNA_STAGING}"
 BIN_DIR="${STAGING_DIR}/bin"
 LIB_DIR="${STAGING_DIR}/lib"
 ETC_DIR="${STAGING_DIR}/etc"
+REDIRECT=""
 
 if [ "$1" = "--help" ] ; then
     echo "Usage: ./run-luna-sysmgr.sh [OPTION]"
@@ -28,12 +35,15 @@ if [ "$1" = "--help" ] ; then
     echo " "
     echo "Optional arguments:"
     echo "    --help  display this help and exit"
+    echo "    -q      redirect console output to /tmp/webos/LunaSysMgr.log"
     echo " "
     exit
+elif [ "$1" = "-q" ] ; then
+    REDIRECT="-q"
 elif [ -n "$1" ] ; then
     echo "Parameter $1 not recognized"
     exit
-elif [ ! -d ${STAGING_DIR} ]  || [ ! -d ${HOME}/luna-desktop-binaries/ls2/roles/prv ]; then
+elif [ ! -d ${STAGING_DIR} ]  || [ ! -d ${ROOTFS}/ls2/roles/prv ]; then
     echo "First build luna-sysmgr"
     exit
 fi
@@ -45,7 +55,12 @@ export PATH=${BIN_DIR}:${PATH}
 if [ -d /etc/palm ] && [ -h /etc/palm ] ; then
     echo "Starting LunaSysMgr ..."
     mkdir -p /tmp/webos
-    ./usr/lib/luna/LunaSysMgr  &> /tmp/webos/LunaSysMgr.log
+    cd ${ROOTFS}
+    if [ -n "${REDIRECT}" ] ; then
+        ./usr/lib/luna/LunaSysMgr  &> /tmp/webos/LunaSysMgr.log
+    else
+        ./usr/lib/luna/LunaSysMgr
+    fi
 else
     echo "First run the install script:  sudo ./install-luna-sysmgr.sh"
 fi

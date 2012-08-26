@@ -17,10 +17,18 @@
 #
 # LICENSE@@@
 
+# TODO: Put sudo (only) where needed, so we don't have to run whole script with sudo
+
+# TODO: Consider moving ls2 conf, services, and roles files to traditional location(s):
+# Directories=/usr/share/ls2/roles/pub;/var/palm/ls2/roles/pub;/var/mft/palm/ls2/roles/pub
+# Directories=/usr/share/dbus-1/services;/var/palm/system-services;/var/palm/ls2/services/pub
+
+set -x
+
 export LSM_TAG="0.823"
 
 export BASE="${HOME}/luna-desktop-binaries"
-export BASE_DIR="${BASE}/luna-sysmgr"
+export ROOTFS="${BASE}/rootfs"
 
 if [ "$1" = "--help" ] ; then
     echo "Usage: sudo ./install-luna-sysmgr.sh [OPTION]"
@@ -39,8 +47,20 @@ elif [ "$1" = "--version" ] ; then
 elif [ -n "$1" ] && [ "$1" != "remove" ] ; then
     echo "Parameter $1 not recognized"
     exit
-elif [ ! -d ${BASE} ] || [ ! -d ${BASE}/ls2/roles/prv ] || [ ! -d ${BASE}/usr/palm/ ] ; then
-    echo "First build luna-sysmgr"
+elif [ ! -d ${ROOTFS} ] || [ ! -d ${ROOTFS}/ls2/roles/prv ] || \
+	[ ! -d ${ROOTFS}/usr/palm/frameworks/enyo ] || [ ! -d ${ROOTFS}/usr/palm/applications ] ; then
+    # force core-apps to re-install (if missing)
+    if [ ! -d ${ROOTFS}/usr/palm/applications ] ; then
+        rm -f ${BASE}/core-apps/luna-desktop-build.stamp
+    fi
+    # force framework to re-install (if missing)
+    if [ ! -d ${ROOTFS}/usr/palm/frameworks/enyo ] ; then
+        rm -f ${BASE}/enyo-1.0/luna-desktop-build.stamp
+    fi
+    # force luna-sysmgr to re-install its files
+    rm -f ${BASE}/luna-sysmgr/luna-desktop-build.stamp
+    
+    echo "Please run build-luna-sysmgr.sh first"
     exit
 fi
 
@@ -109,6 +129,13 @@ if [ -d /etc/palm ] ; then
         unlink /var/usr/palm
     fi
 
+    # everything now goes in $BASE/rootfs, so remove older dirs from $BASE
+    rm -rf $BASE/etc
+    rm -rf $BASE/ls2
+    rm -rf $BASE/share
+    rm -rf $BASE/usr
+    rm -rf $BASE/var
+
     if [ "$1" == "remove" ] ; then
         echo "Removed support files for luna-sysmgr from /usr/palm, /usr/share and /var/usr"
         exit
@@ -127,25 +154,27 @@ fi
 
 ### Install the links from restricted folders
 ### For consistency, creates a few folders which should already exist
-echo "Install links for luna-sysmgr in /etc/ls2, /etc/palm, /usr/palm, "
+echo "Installing links for luna-sysmgr in /etc/ls2, /etc/palm, /usr/palm, "
 echo "    /var/luna, /var/palm, /usr/lib/luna and /usr/share/ls2"
 
-ln -sf ${BASE}/etc/palm /etc/palm
+ln -sf ${ROOTFS}/etc/palm /etc/palm
 
 mkdir -p /usr/share/ls2
-ln -sf ${BASE}/ls2/roles /usr/share/ls2/roles
-ln -sf -T ${BASE}/ls2 /etc/ls2
+ln -sf ${ROOTFS}/ls2/roles /usr/share/ls2/roles
+ln -sf -T ${ROOTFS}/ls2 /etc/ls2
 
-ln -sf ${BASE}/usr/palm /usr/palm
+ln -sf ${ROOTFS}/usr/palm /usr/palm
+
+# TODO: Should be /var/opt/luna/dbus-1
 
 mkdir -p /usr/share/dbus-1/services
-cp -fs ${BASE}/share/dbus-1/services/com.palm.* /usr/share/dbus-1/services
+cp -fs ${ROOTFS}/share/dbus-1/services/com.palm.* /usr/share/dbus-1/services
 mkdir -p /usr/share/dbus-1/system-services
-cp -fs ${BASE}/share/dbus-1/system-services/com.palm.* /usr/share/dbus-1/system-services
+cp -fs ${ROOTFS}/share/dbus-1/system-services/com.palm.* /usr/share/dbus-1/system-services
 
-ln -sf ${BASE}/var/palm /var/palm
-ln -sf ${BASE}/var/luna /var/luna
-ln -sf ${BASE}/usr/lib/luna /usr/lib/luna
+ln -sf ${ROOTFS}/var/palm /var/palm
+ln -sf ${ROOTFS}/var/luna /var/luna
+ln -sf ${ROOTFS}/usr/lib/luna /usr/lib/luna
 mkdir -p /var/usr
-ln -sf ${BASE}/var/usr/palm /var/usr/palm
+ln -sf ${ROOTFS}/var/usr/palm /var/usr/palm
 

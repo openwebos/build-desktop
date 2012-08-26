@@ -25,8 +25,8 @@ if [ "$1" = "clean" ] ; then
 elif [ "$1" = "--help" ] ; then
     echo "Usage:  ./build-luna-sysmgr.sh [OPTION]"
     echo "Builds the luna-sysmgr component and its dependencies."
-    echo "    The script loads about 350MB of source code from GitHub, as needed."
-    echo "    NOTE: This script creates about 2.5GB of disk space"
+    echo "    The script loads about 500MB of source code from GitHub, as needed."
+    echo "    NOTE: This script creates about 4GB of disk space"
     echo " "
     echo "Optional arguments:"
     echo "    clean   force a rebuild of components"
@@ -46,8 +46,8 @@ else
 fi
 
 
-export BASE=$HOME/luna-desktop-binaries
-
+export BASE="${HOME}/luna-desktop-binaries"
+export ROOTFS="${BASE}/rootfs"
 export LUNA_STAGING="${BASE}/staging"
 mkdir -p ${BASE}/tarballs
 mkdir -p ${LUNA_STAGING}
@@ -353,12 +353,12 @@ function build_luna-sysmgr-ipc-messages
 ###########################################
 #  Fetch and build enyo 1.0
 ###########################################
-function build_enyo
+function build_enyo-1.0
 {
     do_fetch enyojs/enyo-1.0 $1 enyo-1.0 submissions/
     cd $BASE/enyo-1.0
-    mkdir -p $BASE/usr/palm/frameworks/enyo/0.10/framework
-    cp -rf framework/* $BASE/usr/palm/frameworks/enyo/0.10/framework
+    mkdir -p $ROOTFS/usr/palm/frameworks/enyo/0.10/framework
+    cp -rf framework/* $ROOTFS/usr/palm/frameworks/enyo/0.10/framework
 }
 
 
@@ -370,20 +370,11 @@ function build_core-apps
     do_fetch openwebos/core-apps $1 core-apps
     cd $BASE/core-apps
 
-    mkdir -p $BASE/usr/palm/applications/com.palm.app.accounts
-    cp -rf com.palm.app.accounts/* $BASE/usr/palm/applications/com.palm.app.accounts
-    mkdir -p $BASE/usr/palm/applications/com.palm.app.calculator
-    cp -rf com.palm.app.calculator/* $BASE/usr/palm/applications/com.palm.app.calculator
-    mkdir -p $BASE/usr/palm/applications/com.palm.app.calendar
-    cp -rf com.palm.app.calendar/* $BASE/usr/palm/applications/com.palm.app.calendar
-    mkdir -p $BASE/usr/palm/applications/com.palm.app.contacts
-    cp -rf com.palm.app.contacts/* $BASE/usr/palm/applications/com.palm.app.contacts
-    mkdir -p $BASE/usr/palm/applications/com.palm.app.clock
-    cp -rf com.palm.app.clock/* $BASE/usr/palm/applications/com.palm.app.clock
-    mkdir -p $BASE/usr/palm/applications/com.palm.app.email
-    cp -rf com.palm.app.email/* $BASE/usr/palm/applications/com.palm.app.email
-    mkdir -p $BASE/usr/palm/applications/com.palm.app.notes
-    cp -rf com.palm.app.notes/* $BASE/usr/palm/applications/com.palm.app.notes
+    # TODO: fix calculator appId:
+    sed -i 's/com.palm.calculator/com.palm.app.calculator/' com.palm.app.calculator/appinfo.json
+
+    mkdir -p $ROOTFS/usr/palm/applications
+    cp -rf com.palm.app.* $ROOTFS/usr/palm/applications/
 }
 
 ##############################
@@ -409,60 +400,70 @@ function build_luna-sysmgr
     make $JOBS -f Makefile.Ubuntu
     mkdir -p $LUNA_STAGING/lib/sysmgr-images
     cp -frad images/* $LUNA_STAGING/lib/sysmgr-images
-    cp -f debug-x86/LunaSysMgr $LUNA_STAGING/lib
-    cp -fs $LUNA_STAGING/lib/LunaSysMgr $BASE/usr/lib/luna/LunaSysMgr
+    #cp -f debug-x86/LunaSysMgr $LUNA_STAGING/lib
+    cp -f debug-x86/LunaSysMgr $LUNA_STAGING/bin
 
+    # TODO: Why are we linking LunaSysMgr to usr/lib/luna?
+    # Does it refer to paths relative to the binary location?
+    # Even if so, it should instead go in usr/bin/ not usr/lib/
+    # Ah, ls2/roles/prv/com.palm.luna.json mentions /usr/lib/luna/LunaSysMgr...
+    mkdir -p $ROOTFS/usr/lib/luna
+    cp -fs $LUNA_STAGING/bin/LunaSysMgr $ROOTFS/usr/lib/luna/LunaSysMgr
+
+    # put user scripts in $BASE, not $ROOTFS
     cp -f desktop-support/service-bus.sh  $BASE/service-bus.sh
     cp -f desktop-support/run-luna-sysmgr.sh  $BASE/run-luna-sysmgr.sh
     cp -f desktop-support/install-luna-sysmgr.sh $BASE/install-luna-sysmgr.sh
-    cp -f desktop-support/ls*.conf $BASE/ls2
 
-    mkdir -p $BASE/usr/lib/luna/system/luna-applauncher
-    cp -f desktop-support/appinfo.json $BASE/usr/lib/luna/system/luna-applauncher/appinfo.json
+    cp -f desktop-support/ls*.conf $ROOTFS/etc/ls2
 
-    cp -f desktop-support/com.palm.luna.json.prv $BASE/ls2/roles/prv/com.palm.luna.json
-    cp -f desktop-support/com.palm.luna.json.pub $BASE/ls2/roles/pub/com.palm.luna.json
-    cp -f desktop-support/com.palm.luna.service.prv $BASE/share/dbus-1/system-services/com.palm.luna.service
-    cp -f desktop-support/com.palm.luna.service.pub $BASE/share/dbus-1/services/com.palm.luna.service
-    mkdir -p $BASE/etc/palm/pubsub_handlers
-    cp -f service/com.palm.appinstaller.pubsub $BASE/etc/palm/pubsub_handlers/com.palm.appinstaller
+    mkdir -p $ROOTFS/usr/lib/luna/system/luna-applauncher
+    cp -f desktop-support/appinfo.json $ROOTFS/usr/lib/luna/system/luna-applauncher/appinfo.json
 
-    cp -f conf/default-exhibition-apps.json $BASE/etc/palm/default-exhibition-apps.json
-    cp -f conf/default-launcher-page-layout.json $BASE/etc/palm/default-launcher-page-layout.json
-    cp -f conf/defaultPreferences.txt $BASE/etc/palm/defaultPreferences.txt
-    cp -f conf/luna.conf $BASE/etc/palm/luna.conf
-    cp -f conf/luna-desktop.conf $BASE/etc/palm/luna-platform.conf
-    cp -f conf/lunaAnimations.conf $BASE/etc/palm/lunaAnimations.conf
-    cp -f conf/notificationPolicy.conf $BASE/etc/palm//notificationPolicy.conf
+    cp -f desktop-support/com.palm.luna.json.prv $ROOTFS/ls2/roles/prv/com.palm.luna.json
+    cp -f desktop-support/com.palm.luna.json.pub $ROOTFS/ls2/roles/pub/com.palm.luna.json
+    cp -f desktop-support/com.palm.luna.service.prv $ROOTFS/share/dbus-1/system-services/com.palm.luna.service
+    cp -f desktop-support/com.palm.luna.service.pub $ROOTFS/share/dbus-1/services/com.palm.luna.service
 
-    mkdir -p $BASE/usr/lib/luna/customization
-    cp -f conf/default-exhibition-apps.json $BASE/usr/lib/luna/customization/default-exhibition-apps.json
+    mkdir -p $ROOTFS/etc/palm/pubsub_handlers
+    cp -f service/com.palm.appinstaller.pubsub $ROOTFS/etc/palm/pubsub_handlers/com.palm.appinstaller
 
-    mkdir -p $BASE/usr/palm/sounds
-    cp -f sounds/* $BASE/usr/palm/sounds
+    cp -f conf/default-exhibition-apps.json $ROOTFS/etc/palm/default-exhibition-apps.json
+    cp -f conf/default-launcher-page-layout.json $ROOTFS/etc/palm/default-launcher-page-layout.json
+    cp -f conf/defaultPreferences.txt $ROOTFS/etc/palm/defaultPreferences.txt
+    cp -f conf/luna.conf $ROOTFS/etc/palm/luna.conf
+    cp -f conf/luna-desktop.conf $ROOTFS/etc/palm/luna-platform.conf
+    cp -f conf/lunaAnimations.conf $ROOTFS/etc/palm/lunaAnimations.conf
+    cp -f conf/notificationPolicy.conf $ROOTFS/etc/palm//notificationPolicy.conf
 
-    mkdir -p $BASE/etc/palm/luna-applauncher
-    cp -f desktop-support/appinfo.json $BASE/etc/palm/luna-applauncher
+    mkdir -p $ROOTFS/usr/lib/luna/customization
+    cp -f conf/default-exhibition-apps.json $ROOTFS/usr/lib/luna/customization/default-exhibition-apps.json
 
-    mkdir -p $BASE/etc/palm/launcher3
-    cp -rf conf/launcher3/* $BASE/etc/palm/launcher3
+    mkdir -p $ROOTFS/usr/palm/sounds
+    cp -f sounds/* $ROOTFS/usr/palm/sounds
 
-     mkdir -p $BASE/etc/palm/schemas
-    cp -rf conf/*.schema $BASE/etc/palm/schemas
+    mkdir -p $ROOTFS/etc/palm/luna-applauncher
+    cp -f desktop-support/appinfo.json $ROOTFS/etc/palm/luna-applauncher
 
-    mkdir -p $BASE/etc/palm/db-kinds
-    cp -f mojodb/com.palm.securitypolicy $BASE/etc/palm/db-kinds
-    cp -f mojodb/com.palm.securitypolicy.device $BASE/etc/palm/db-kinds
-    mkdir -p $BASE/etc/palm/db/permissions
-    cp -f mojodb/com.palm.securitypolicy.permissions $BASE/etc/palm/db/permissions/com.palm.securitypolicy
+    mkdir -p $ROOTFS/etc/palm/launcher3
+    cp -rf conf/launcher3/* $ROOTFS/etc/palm/launcher3
 
-    mkdir -p $BASE/usr/palm/sysmgr/images
-    cp -fr images/* $BASE/usr/palm/sysmgr/images
-    mkdir -p $BASE/usr/palm/sysmgr/localization
-    mkdir -p $BASE/usr/palm/sysmgr/low-memory
-    cp -frad low-memory/* $BASE/usr/palm/sysmgr/low-memory
-    mkdir -p $BASE/usr/palm/sysmgr/uiComponents
-    cp -frad uiComponents/* $BASE/usr/palm/sysmgr/uiComponents
+    mkdir -p $ROOTFS/etc/palm/schemas
+    cp -rf conf/*.schema $ROOTFS/etc/palm/schemas
+
+    mkdir -p $ROOTFS/etc/palm/db-kinds
+    cp -f mojodb/com.palm.securitypolicy $ROOTFS/etc/palm/db-kinds
+    cp -f mojodb/com.palm.securitypolicy.device $ROOTFS/etc/palm/db-kinds
+    mkdir -p $ROOTFS/etc/palm/db/permissions
+    cp -f mojodb/com.palm.securitypolicy.permissions $ROOTFS/etc/palm/db/permissions/com.palm.securitypolicy
+
+    mkdir -p $ROOTFS/usr/palm/sysmgr/images
+    cp -fr images/* $ROOTFS/usr/palm/sysmgr/images
+    mkdir -p $ROOTFS/usr/palm/sysmgr/localization
+    mkdir -p $ROOTFS/usr/palm/sysmgr/low-memory
+    cp -frad low-memory/* $ROOTFS/usr/palm/sysmgr/low-memory
+    mkdir -p $ROOTFS/usr/palm/sysmgr/uiComponents
+    cp -frad uiComponents/* $ROOTFS/usr/palm/sysmgr/uiComponents
 
 }
 
@@ -549,7 +550,7 @@ function build_BrowserAdapter
     # stage files
     make -e PREFIX=$LUNA_STAGING -f Makefile.Ubuntu stage BUILD_TYPE=release
 
-    # TODO: Need to install files (maybe more than just these) in BrowserAdapterData...
+    # TODO: Might need to install files (maybe more than just these) in BrowserAdapterData...
     #mkdir -p $LUNA_STAGING/lib/BrowserPlugins/BrowserAdapterData
     #cp data/launcher-bookmark-alpha.png $LUNA_STAGING/lib/BrowserPlugins/BrowserAdapterData
     #cp data/launcher-bookmark-overlay.png $LUNA_STAGING/lib/BrowserPlugins/BrowserAdapterData
@@ -608,7 +609,9 @@ function build
 
 echo ""
 echo "**********************************************************"
-echo "Binaries will be built in $BASE."
+echo "Binaries will be built in ${BASE}."
+echo "Components will be staged in ${LUNA_STAGING}."
+echo "Components will be installed in ${ROOTFS}."
 echo ""
 echo "If you want to change this edit the 'BASE' variable in this script."
 echo ""
@@ -621,18 +624,18 @@ mkdir -p $LUNA_STAGING/lib
 mkdir -p $LUNA_STAGING/bin
 mkdir -p $LUNA_STAGING/include
 
-mkdir -p $BASE/etc/palm
-mkdir -p $BASE/ls2/roles/prv
-mkdir -p $BASE/ls2/roles/pub
-mkdir -p $BASE/share/dbus-1/system-services
-mkdir -p $BASE/share/dbus-1/services
-mkdir -p $BASE/usr/lib/luna/system/luna-systemui
-mkdir -p $BASE/usr/palm/public/accounts
-mkdir -p $BASE/usr/palm/services
-mkdir -p $BASE/usr/palm/smartkey
-mkdir -p $BASE/var/luna
-mkdir -p $BASE/var/palm
-mkdir -p $BASE/var/usr/palm
+mkdir -p ${ROOTFS}/etc/palm
+mkdir -p ${ROOTFS}/ls2/roles/prv
+mkdir -p ${ROOTFS}/ls2/roles/pub
+mkdir -p ${ROOTFS}/share/dbus-1/system-services
+mkdir -p ${ROOTFS}/share/dbus-1/services
+mkdir -p ${ROOTFS}/usr/lib/luna/system/luna-systemui
+mkdir -p ${ROOTFS}/usr/palm/public/accounts
+mkdir -p ${ROOTFS}/usr/palm/services
+mkdir -p ${ROOTFS}/usr/palm/smartkey
+mkdir -p ${ROOTFS}/var/luna
+mkdir -p ${ROOTFS}/var/palm
+mkdir -p ${ROOTFS}/var/usr/palm
 set -x
 
 if [ ! -d "$BASE/luna-sysmgr" ] || [ ! -d "$BASE/tarballs" ] || [ ! -e "$BASE/tarballs/luna-sysmgr_${LSM_TAG}.zip" ] ; then
@@ -653,7 +656,7 @@ build luna-webkit-api 0.90
 build webkit 0.3
 build luna-sysmgr-ipc 0.90
 build luna-sysmgr-ipc-messages 0.90
-build enyo 128.2
+build enyo-1.0 128.2
 build core-apps 1.0.1
 build luna-sysmgr $LSM_TAG
 build WebKitSupplemental 0.4
