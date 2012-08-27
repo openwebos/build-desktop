@@ -18,9 +18,15 @@ Install components needed to build luna-sysmgr by typing the following:
 
         sudo apt-get update
 
-        sudo apt-get install git git-core pkg-config cmake make autoconf libtool g++ tcl unzip libyajl-dev libyajl1 qt4-qmake libsqlite3-dev curl
+        sudo apt-get install git git-core pkg-config cmake make autoconf \
+		libtool g++ tcl unzip libyajl-dev libyajl1 qt4-qmake \
+		libsqlite3-dev curl
 
-        sudo apt-get install gperf bison libglib2.0-dev libssl-dev libxi-dev libxrandr-dev libxfixes-dev libxcursor-dev libfreetype6-dev libxinerama-dev libgl1-mesa-dev libgstreamer0.10-dev libgstreamer-plugins-base0.10-dev flex libicu-dev
+        sudo apt-get install gperf bison libglib2.0-dev libssl-dev \
+		libxi-dev libxrandr-dev libxfixes-dev libxcursor-dev \
+		libfreetype6-dev libxinerama-dev libgl1-mesa-dev \
+		libgstreamer0.10-dev libgstreamer-plugins-base0.10-dev \
+		flex libicu-dev libboost-all-dev liburiparser-dev
 
         sudo apt-get build-dep qt4-qmake
 

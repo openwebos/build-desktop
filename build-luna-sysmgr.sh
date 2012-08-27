@@ -350,6 +350,42 @@ function build_luna-sysmgr-ipc-messages
     fi
 }
 
+#################################
+# Fetch and build luna-prefs
+################################# 
+function build_luna-prefs
+{
+    do_fetch openwebos/luna-prefs $1 luna-prefs versions/
+    cd $BASE/luna-prefs
+    #sed -i 's/#include <json.h>//' include/lunaprefs.h
+    make
+    cp objs/libluna-prefs.so.0 $LUNA_STAGING/lib
+    cp ../include/lunaprefs.h $LUNA_STAGING/include
+
+}
+
+#################################
+# Fetch and build luna-sysservice
+################################# 
+function build_luna-sysservice 
+{
+    do_fetch openwebos/luna-sysservice $1 luna-sysservice
+    cd $BASE/luna-sysservice
+    #mkdir -p build
+    #cd build
+    #PKG_CONFIG_PATH=$LUNA_STAGING/lib/pkgconfig \
+    #cmake .. -DCMAKE_INSTALL_PREFIX=${LUNA_STAGING} -DCMAKE_BUILD_TYPE=Release
+    #make $JOBS
+    #make install
+
+    #sed -i 's/-lgdbus//' Makefile.Ubuntu
+    # TODO: luna-sysservice generates a few warnings which will kill the build if we don't turn off -Werror
+    sed -i 's/-Werror//' Makefile.inc
+    sed -i 's/#include "json_utils.h"//' Src/ImageServices.cpp
+    make $JOBS -f Makefile.Ubuntu
+    cp debug-x86/LunaSysService $LUNA_STAGING/bin
+}
+
 ###########################################
 #  Fetch and build enyo 1.0
 ###########################################
@@ -705,11 +741,17 @@ build luna-sysmgr-ipc 0.90
 build luna-sysmgr-ipc-messages 0.90
 build luna-sysmgr $LSM_TAG
 
+#TODO: luna-prefs still depends on mjson
+#build luna-prefs 2.0.0
+#TODO: need tag for luna-sysservice; depends on luna-prefs
+#build luna-sysservice master
+
 build enyo-1.0 128.2
 build core-apps master
 
 build foundation-frameworks 1.0
 build mojoservice-frameworks 1.0
+#TODO: need tag for loadable-frameworks:
 build loadable-frameworks master
 build app-services 1.0
 
