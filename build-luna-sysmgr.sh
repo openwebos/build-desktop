@@ -699,9 +699,11 @@ function build_configurator
 function build_activitymanager
 {
     do_fetch openwebos/activitymanager $1 activitymanager submissions/
-    mkdir -p $BASE/pmstatemachineengine/build
-    cd $BASE/pmstatemachineengine/build
-    cmake -D WEBOS_INSTALL_ROOT:PATH=${LUNA_STAGING} ..
+    mkdir -p $BASE/activitymanager/build
+    cd $BASE/activitymanager/build
+    #TODO: Remove this when db8 gets a pkgconfig file...
+    sed -i "s!/include/mojodb!${LUNA_STAGING}/include/mojodb!" ../CMakeLists.txt
+    cmake -D WEBOS_INSTALL_ROOT:PATH=${LUNA_STAGING} -DCMAKE_INSTALL_PREFIX=${LUNA_STAGING} ..
     make $JOBS
     make install
 }
