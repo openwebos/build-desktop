@@ -358,7 +358,7 @@ function build_luna-prefs
     do_fetch openwebos/luna-prefs $1 luna-prefs versions/
     cd $BASE/luna-prefs
     #sed -i 's/#include <json.h>//' include/lunaprefs.h
-    make
+    make $JOBS
     cp objs/libluna-prefs.so.0 $LUNA_STAGING/lib
     cp ../include/lunaprefs.h $LUNA_STAGING/include
 
@@ -662,6 +662,16 @@ function build_nodejs
     #tools/waf-light install -vv
 }
 
+#####################
+# Fetch and build db8
+##################### 
+function build_db8
+{
+    do_fetch openwebos/db8 $1 db8 submissions/
+    cd $BASE/db8
+    make $JOBS -e PREFIX=$LUNA_STAGING -f Makefile.Ubuntu install BUILD_TYPE=release
+}
+
 ###############
 # build wrapper
 ###############
@@ -761,6 +771,7 @@ build BrowserServer 0.4
 build BrowserAdapter 0.3
 
 build nodejs 0.4.12-webos2
+build db8 54.15
 
 echo ""
 echo "Complete. "
