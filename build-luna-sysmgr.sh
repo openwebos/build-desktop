@@ -59,6 +59,12 @@ export SCRIPT_DIR=$PWD
 export PKG_CONFIG_PATH=$LUNA_STAGING/lib/pkgconfig
 export MAKEFILES_DIR=$BASE/pmmakefiles
 
+if [ -x "${BASE}/cmake/bin/cmake" ] ; then
+  export CMAKE="${BASE}/cmake/bin/cmake"
+else
+  export CMAKE="cmake"
+fi
+
 PROCS=`grep -c processor /proc/cpuinfo`
 [ $PROCS -gt 1 ] && JOBS="-j${PROCS}"
 
@@ -132,6 +138,38 @@ do_fetch() {
 }
 
 ########################
+#  Fetch and build cmake
+########################
+function build_cmake
+{
+    mkdir -p $BASE/cmake
+    cd $BASE/cmake
+    wget http://www.cmake.org/files/v2.8/cmake-2.8.8-Linux-i386.sh
+    chmod ugo+x cmake-2.8.8-Linux-i386.sh
+    echo "Answer Y and then N to install cmake into luna-desktop-binaries/cmake..."
+    echo
+    ./cmake-2.8.8-Linux-i386.sh
+}
+
+######################################
+#  Fetch and build cmake-modules-webos
+######################################
+function build_cmake-modules-webos
+{
+    cd $BASE
+    if [ ! -d cmake-modules-webos ] ; then
+      do_fetch openwebos/cmake-modules-webos master cmake-modules-webos
+      mkdir -p $BASE/cmake-modules-webos/BUILD
+      cd $BASE/cmake-modules-webos/BUILD
+      $CMAKE .. -DCMAKE_INSTALL_PREFIX=${BASE}/cmake
+      make
+      #TODO: handle install on 12.04 too (needs: sudo make install)
+      mkdir -p $BASE/cmake
+      make install
+    fi
+}
+
+########################
 #  Fetch and build cjson
 ########################
 function build_cjson
@@ -159,7 +197,7 @@ function build_pbnjson
     sed -i 's/set(EXTERNAL_YAJL TRUE)/set(EXTERNAL_YAJL FALSE)/' ../src/CMakeLists.txt
     sed -i 's/add_subdirectory(pjson_engine\//add_subdirectory(deps\//' ../src/CMakeLists.txt
     sed -i 's/-Werror//' ../src/CMakeLists.txt
-    cmake ../src -DCMAKE_FIND_ROOT_PATH=${LUNA_STAGING} -DYAJL_INSTALL_DIR=${LUNA_STAGING} -DWITH_TESTS=False -DWITH_DOCS=False -DCMAKE_INSTALL_PREFIX=${LUNA_STAGING} -DCMAKE_BUILD_TYPE=Release
+    $CMAKE ../src -DCMAKE_FIND_ROOT_PATH=${LUNA_STAGING} -DYAJL_INSTALL_DIR=${LUNA_STAGING} -DWITH_TESTS=False -DWITH_DOCS=False -DCMAKE_INSTALL_PREFIX=${LUNA_STAGING} -DCMAKE_BUILD_TYPE=Release
     make $JOBS install
 }
 
@@ -171,7 +209,7 @@ function build_pmloglib
     do_fetch openwebos/pmloglib $1 pmloglib submissions/
     mkdir -p $BASE/pmloglib/build
     cd $BASE/pmloglib/build
-    cmake .. -DNO_TESTS=True -DNO_UTILS=True -DCMAKE_INSTALL_PREFIX=${LUNA_STAGING} -DCMAKE_BUILD_TYPE=Release
+    $CMAKE .. -DNO_TESTS=True -DNO_UTILS=True -DCMAKE_INSTALL_PREFIX=${LUNA_STAGING} -DCMAKE_BUILD_TYPE=Release
     make $JOBS
     make install
 }
@@ -184,7 +222,7 @@ function build_nyx-lib
     do_fetch openwebos/nyx-lib $1 nyx-lib submissions/
     mkdir -p $BASE/nyx-lib/build
     cd $BASE/nyx-lib/build
-    cmake .. -DNO_TESTS=True -DNO_UTILS=True -DCMAKE_INSTALL_PREFIX=${LUNA_STAGING} -DCMAKE_BUILD_TYPE=Release
+    $CMAKE .. -DNO_TESTS=True -DNO_UTILS=True -DCMAKE_INSTALL_PREFIX=${LUNA_STAGING} -DCMAKE_BUILD_TYPE=Release
     make $JOBS
     make install
 }
@@ -230,7 +268,10 @@ function build_luna-service2
     mkdir -p $BASE/luna-service2/build
     cd $BASE/luna-service2/build
 
-    cmake .. -DNO_TESTS=True -DNO_UTILS=True -DCMAKE_INSTALL_PREFIX=${LUNA_STAGING} -DCMAKE_BUILD_TYPE=Release
+    #TODO: lunaservice.h no longer needs cjson (and removing the include fixes filecache build)
+    sed -i 's!#include <cjson/json.h>!!' ../include/lunaservice.h
+
+    $CMAKE .. -DNO_TESTS=True -DNO_UTILS=True -DCMAKE_INSTALL_PREFIX=${LUNA_STAGING} -DCMAKE_BUILD_TYPE=Release
     make $JOBS
     make install
 
@@ -364,7 +405,7 @@ function build_luna-prefs
     #TODO: Switch to cmake build
     #mkdir -p $BASE/luna-prefs/build
     #cd $BASE/luna-prefs/build
-    #cmake -D WEBOS_INSTALL_ROOT:PATH=${LUNA_STAGING} -DCMAKE_INSTALL_PREFIX=${LUNA_STAGING} ..
+    #$CMAKE -D WEBOS_INSTALL_ROOT:PATH=${LUNA_STAGING} -DCMAKE_INSTALL_PREFIX=${LUNA_STAGING} ..
     #make $JOBS
     #make install
 }
@@ -382,7 +423,7 @@ function build_luna-sysservice
     #cd build
     #sed -i 's/REQUIRED uriparser/REQUIRED liburiparser/' ../CMakeLists.txt
     #PKG_CONFIG_PATH=$LUNA_STAGING/lib/pkgconfig \
-    #cmake .. -DCMAKE_INSTALL_PREFIX=${LUNA_STAGING} -DCMAKE_BUILD_TYPE=Release
+    #$CMAKE .. -DCMAKE_INSTALL_PREFIX=${LUNA_STAGING} -DCMAKE_BUILD_TYPE=Release
     #make $JOBS
     #make install
 
@@ -656,7 +697,7 @@ function build_nodejs
     do_fetch openwebos/nodejs $1 nodejs versions/
     mkdir -p $BASE/nodejs/build
     cd $BASE/nodejs/build
-    cmake .. -DNO_TESTS=True -DNO_UTILS=True -DCMAKE_INSTALL_PREFIX=${LUNA_STAGING} -DCMAKE_BUILD_TYPE=Release
+    $CMAKE .. -DNO_TESTS=True -DNO_UTILS=True -DCMAKE_INSTALL_PREFIX=${LUNA_STAGING} -DCMAKE_BUILD_TYPE=Release
     make $JOBS
     make install
 
@@ -703,7 +744,7 @@ function build_activitymanager
     cd $BASE/activitymanager/build
     #TODO: Remove this when db8 gets a pkgconfig file...
     sed -i "s!/include/mojodb!${LUNA_STAGING}/include/mojodb!" ../CMakeLists.txt
-    cmake -D WEBOS_INSTALL_ROOT:PATH=${LUNA_STAGING} -DCMAKE_INSTALL_PREFIX=${LUNA_STAGING} ..
+    $CMAKE -D WEBOS_INSTALL_ROOT:PATH=${LUNA_STAGING} -DCMAKE_INSTALL_PREFIX=${LUNA_STAGING} ..
     make $JOBS
     make install
 }
@@ -716,7 +757,7 @@ function build_pmstatemachineengine
     do_fetch openwebos/pmstatemachineengine $1 pmstatemachineengine submissions/
     mkdir -p $BASE/pmstatemachineengine/build
     cd $BASE/pmstatemachineengine/build
-    cmake -D WEBOS_INSTALL_ROOT:PATH=${LUNA_STAGING} ..
+    $CMAKE -D WEBOS_INSTALL_ROOT:PATH=${LUNA_STAGING} ..
     make $JOBS
     make install
 }
@@ -729,7 +770,7 @@ function build_libpalmsocket
     do_fetch openwebos/libpalmsocket $1 libpalmsocket submissions/
     mkdir -p $BASE/libpalmsocket/build
     cd $BASE/libpalmsocket/build
-    cmake -D WEBOS_INSTALL_ROOT:PATH=${LUNA_STAGING} ..
+    $CMAKE -D WEBOS_INSTALL_ROOT:PATH=${LUNA_STAGING} ..
     make $JOBS
     make install
 }
@@ -742,7 +783,7 @@ function build_libsandbox
     do_fetch openwebos/libsandbox $1 libsandbox submissions/
     mkdir -p $BASE/libsandbox/build
     cd $BASE/libsandbox/build
-    cmake -D WEBOS_INSTALL_ROOT:PATH=${LUNA_STAGING} ..
+    $CMAKE -D WEBOS_INSTALL_ROOT:PATH=${LUNA_STAGING} ..
     make $JOBS
     make install
 }
@@ -755,7 +796,7 @@ function build_jemalloc
     do_fetch openwebos/jemalloc $1 jemalloc submissions/
     mkdir -p $BASE/jemalloc/build
     cd $BASE/jemalloc/build
-    cmake -D WEBOS_INSTALL_ROOT:PATH=${LUNA_STAGING} -DCMAKE_INSTALL_PREFIX=${LUNA_STAGING} ..
+    $CMAKE -D WEBOS_INSTALL_ROOT:PATH=${LUNA_STAGING} -DCMAKE_INSTALL_PREFIX=${LUNA_STAGING} ..
     make $JOBS
     make install
 }
@@ -768,7 +809,7 @@ function build_filecache
     do_fetch openwebos/filecache $1 filecache submissions/
     mkdir -p $BASE/filecache/build
     cd $BASE/filecache/build
-    cmake -D WEBOS_INSTALL_ROOT:PATH=${LUNA_STAGING} -DCMAKE_INSTALL_PREFIX=${LUNA_STAGING} ..
+    $CMAKE -D WEBOS_INSTALL_ROOT:PATH=${LUNA_STAGING} -DCMAKE_INSTALL_PREFIX=${LUNA_STAGING} ..
     make $JOBS
     make install
 }
@@ -818,7 +859,12 @@ mkdir -p $LUNA_STAGING/lib
 mkdir -p $LUNA_STAGING/bin
 mkdir -p $LUNA_STAGING/include
 
+mkdir -p ${ROOTFS}/etc/ls2
 mkdir -p ${ROOTFS}/etc/palm
+#TODO: Fix whatever is installing to etc/palm/db-kinds
+mkdir -p ${ROOTFS}/etc/palm/db_kinds
+mkdir -p ${ROOTFS}/etc/palm/db/kinds
+mkdir -p ${ROOTFS}/etc/palm/db/permissions
 mkdir -p ${ROOTFS}/ls2/roles/prv
 mkdir -p ${ROOTFS}/ls2/roles/pub
 mkdir -p ${ROOTFS}/share/dbus-1/system-services
@@ -838,6 +884,10 @@ fi
 #if [ -d $BASE/luna-sysmgr ] ; then
 #    rm -f $BASE/luna-sysmgr/luna-desktop-build.stamp
 #fi
+
+#TODO: Needed to support for building on 11.04:
+#build cmake
+#build cmake-modules-webos
 
 build cjson 35
 build pbnjson 0.2
@@ -875,7 +925,7 @@ build nodejs 0.4.12-webos2
 build db8 54.15
 build configurator 1.0
 
-#NOTE: The following components need 12.04, latest cmake, and webos cmake module:
+#NOTE: The following components need cmake 2.8.7 or newer, and webos cmake module:
 build activitymanager 107
 build pmstatemachineengine 13
 build libpalmsocket 30
@@ -883,7 +933,7 @@ build libsandbox 15
 
 build jemalloc 11
 #TODO: filecache can't find cjson header:
-#build filecache 53
+build filecache 53
 
 echo ""
 echo "Complete. "
