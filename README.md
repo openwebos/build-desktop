@@ -26,7 +26,10 @@ Install components needed to build luna-sysmgr by typing the following:
 		libxi-dev libxrandr-dev libxfixes-dev libxcursor-dev \
 		libfreetype6-dev libxinerama-dev libgl1-mesa-dev \
 		libgstreamer0.10-dev libgstreamer-plugins-base0.10-dev \
-		flex libicu-dev libboost-all-dev liburiparser-dev
+		flex libicu-dev
+
+	sudo apt-get install libboost-all-dev liburiparser-dev libc-ares-dev \
+		libsigc++-2.0-dev libglibmm-2.4-dev libjemalloc-dev
 
         sudo apt-get build-dep qt4-qmake
 

@@ -672,6 +672,96 @@ function build_db8
     make $JOBS -e PREFIX=$LUNA_STAGING -f Makefile.Ubuntu install BUILD_TYPE=release
 }
 
+##############################
+# Fetch and build configurator
+##############################
+function build_configurator
+{
+    do_fetch openwebos/configurator $1 configurator
+    cd $BASE/configurator
+    ARCH_LDFLAGS="-Wl,-rpath-link $LUNA_STAGING/lib" make $JOBS -f Makefile.Ubuntu
+    # install configurator binary
+    cp debug-linux-x86/configurator $LUNA_STAGING/bin/
+}
+
+#################################
+# Fetch and build activitymanager
+#################################
+function build_activitymanager
+{
+    do_fetch openwebos/activitymanager $1 activitymanager submissions/
+    mkdir -p $BASE/pmstatemachineengine/build
+    cd $BASE/pmstatemachineengine/build
+    cmake -D WEBOS_INSTALL_ROOT:PATH=${LUNA_STAGING} ..
+    make $JOBS
+    make install
+}
+
+#######################################
+#  Fetch and build pmstatemachineengine
+#######################################
+function build_pmstatemachineengine
+{
+    do_fetch openwebos/pmstatemachineengine $1 pmstatemachineengine submissions/
+    mkdir -p $BASE/pmstatemachineengine/build
+    cd $BASE/pmstatemachineengine/build
+    cmake -D WEBOS_INSTALL_ROOT:PATH=${LUNA_STAGING} ..
+    make $JOBS
+    make install
+}
+
+################################
+#  Fetch and build libpalmsocket
+################################
+function build_libpalmsocket
+{
+    do_fetch openwebos/libpalmsocket $1 libpalmsocket submissions/
+    mkdir -p $BASE/libpalmsocket/build
+    cd $BASE/libpalmsocket/build
+    cmake -D WEBOS_INSTALL_ROOT:PATH=${LUNA_STAGING} ..
+    make $JOBS
+    make install
+}
+
+#############################
+#  Fetch and build libsandbox
+#############################
+function build_libsandbox
+{
+    do_fetch openwebos/libsandbox $1 libsandbox submissions/
+    mkdir -p $BASE/libsandbox/build
+    cd $BASE/libsandbox/build
+    cmake -D WEBOS_INSTALL_ROOT:PATH=${LUNA_STAGING} ..
+    make $JOBS
+    make install
+}
+
+###########################
+#  Fetch and build jemalloc
+###########################
+function build_jemalloc
+{
+    do_fetch openwebos/jemalloc $1 jemalloc submissions/
+    mkdir -p $BASE/jemalloc/build
+    cd $BASE/jemalloc/build
+    cmake -D WEBOS_INSTALL_ROOT:PATH=${LUNA_STAGING} -DCMAKE_INSTALL_PREFIX=${LUNA_STAGING} ..
+    make $JOBS
+    make install
+}
+
+############################
+#  Fetch and build filecache
+############################
+function build_filecache
+{
+    do_fetch openwebos/filecache $1 filecache submissions/
+    mkdir -p $BASE/filecache/build
+    cd $BASE/filecache/build
+    cmake -D WEBOS_INSTALL_ROOT:PATH=${LUNA_STAGING} -DCMAKE_INSTALL_PREFIX=${LUNA_STAGING} ..
+    make $JOBS
+    make install
+}
+
 ###############
 # build wrapper
 ###############
@@ -765,6 +855,8 @@ build mojoservice-frameworks 1.0
 build loadable-frameworks master
 build app-services 1.0
 
+#TODO: need to add mojoloader and mojoservicelauncher
+
 build WebKitSupplemental 0.4
 build AdapterBase 0.2
 build BrowserServer 0.4
@@ -772,6 +864,17 @@ build BrowserAdapter 0.3
 
 build nodejs 0.4.12-webos2
 build db8 54.15
+build configurator 1.0
+
+#NOTE: The following components need 12.04, latest cmake, and webos cmake module:
+build activitymanager 107
+build pmstatemachineengine 13
+build libpalmsocket 30
+build libsandbox 15
+
+build jemalloc 11
+#TODO: filecache can't find cjson header:
+#build filecache 53
 
 echo ""
 echo "Complete. "
