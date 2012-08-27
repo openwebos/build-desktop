@@ -37,6 +37,8 @@ Install components needed to build luna-sysmgr by typing the following:
   
   * Ensure you have at least 3GB of available disk space
 
+  * cmake 2.8.7 is required.  For Ubuntu 11.04 it must be built/installed manually.
+
 b) Getting the code
 -------------------
 
