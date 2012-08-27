@@ -369,13 +369,60 @@ function build_core-apps
 {
     do_fetch openwebos/core-apps $1 core-apps
     cd $BASE/core-apps
-
-    # TODO: fix calculator appId:
-    sed -i 's/com.palm.calculator/com.palm.app.calculator/' com.palm.app.calculator/appinfo.json
-
     mkdir -p $ROOTFS/usr/palm/applications
     cp -rf com.palm.app.* $ROOTFS/usr/palm/applications/
 }
+
+
+###########################################
+#  Fetch and build foundation-frameworks
+###########################################
+function build_foundation-frameworks
+{
+    do_fetch openwebos/foundation-frameworks $1 foundation-frameworks
+    cd $BASE/foundation-frameworks
+    mkdir -p $ROOTFS/usr/palm/frameworks/
+    cp -rf foundations* $ROOTFS/usr/palm/frameworks/
+}
+
+
+###########################################
+#  Fetch and build mojoservice-frameworks
+###########################################
+function build_mojoservice-frameworks
+{
+    do_fetch openwebos/mojoservice-frameworks $1 mojoservice-frameworks
+    cd $BASE/mojoservice-frameworks
+    mkdir -p $ROOTFS/usr/palm/frameworks/
+    cp -rf mojoservice* $ROOTFS/usr/palm/frameworks/
+}
+
+
+###########################################
+#  Fetch and build loadable-frameworks
+###########################################
+function build_loadable-frameworks
+{
+    do_fetch openwebos/loadable-frameworks $1 loadable-frameworks
+    cd $BASE/loadable-frameworks
+    mkdir -p $ROOTFS/usr/palm/frameworks/
+    cp -rf calendar* contacts globalization $ROOTFS/usr/palm/frameworks/
+}
+
+
+###########################################
+#  Fetch and build app-services
+###########################################
+function build_app-services
+{
+    do_fetch openwebos/app-services $1 app-services
+    cd $BASE/app-services
+    mkdir -p $ROOTFS/usr/palm/services
+    cp -rf com.palm.* $ROOTFS/usr/palm/services
+    cp -rf account-templates $ROOTFS/usr/palm/services
+    cp -rf mojomail $ROOTFS/usr/palm/services
+}
+
 
 ##############################
 #  Fetch and build luna-sysmgr
@@ -656,13 +703,21 @@ build luna-webkit-api 0.90
 build webkit 0.3
 build luna-sysmgr-ipc 0.90
 build luna-sysmgr-ipc-messages 0.90
-build enyo-1.0 128.2
-build core-apps 1.0.1
 build luna-sysmgr $LSM_TAG
+
+build enyo-1.0 128.2
+build core-apps master
+
+build foundation-frameworks 1.0
+build mojoservice-frameworks 1.0
+build loadable-frameworks master
+build app-services 1.0
+
 build WebKitSupplemental 0.4
 build AdapterBase 0.2
 build BrowserServer 0.4
 build BrowserAdapter 0.3
+
 build nodejs 0.4.12-webos2
 
 echo ""
