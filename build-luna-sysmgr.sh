@@ -56,7 +56,8 @@ export BEDLAM_ROOT="${BASE}/staging"
 export JAVA_HOME=/usr/lib/jvm/java-6-sun
 export JDKROOT=${JAVA_HOME}
 export SCRIPT_DIR=$PWD
-export PKG_CONFIG_PATH=$LUNA_STAGING/lib/pkgconfig
+# old builds put .pc files in lib/pkgconfig; cmake-modules-webos puts them in usr/share/pkgconfig
+export PKG_CONFIG_PATH=$LUNA_STAGING/lib/pkgconfig:$LUNA_STAGING/usr/share/pkgconfig
 export MAKEFILES_DIR=$BASE/pmmakefiles
 
 if [ -x "${BASE}/cmake/bin/cmake" ] ; then
@@ -454,6 +455,9 @@ function build_core-apps
 {
     do_fetch openwebos/core-apps $1 core-apps
     cd $BASE/core-apps
+    # TODO: fix calculator appId:
+    sed -i 's/com.palm.calculator/com.palm.app.calculator/' com.palm.app.calculator/appinfo.json
+
     mkdir -p $ROOTFS/usr/palm/applications
     cp -rf com.palm.app.* $ROOTFS/usr/palm/applications/
 }
@@ -466,7 +470,10 @@ function build_foundation-frameworks
     do_fetch openwebos/foundation-frameworks $1 foundation-frameworks
     cd $BASE/foundation-frameworks
     mkdir -p $ROOTFS/usr/palm/frameworks/
-    cp -rf foundations* $ROOTFS/usr/palm/frameworks/
+    for FRAMEWORK in `ls -d1 foundations*` ; do
+      mkdir -p $ROOTFS/usr/palm/frameworks/$FRAMEWORK/version/1.0/
+      cp -rf $FRAMEWORK/* $ROOTFS/usr/palm/frameworks/$FRAMEWORK/version/1.0/
+    done
 }
 
 ###########################################
@@ -477,7 +484,10 @@ function build_mojoservice-frameworks
     do_fetch openwebos/mojoservice-frameworks $1 mojoservice-frameworks
     cd $BASE/mojoservice-frameworks
     mkdir -p $ROOTFS/usr/palm/frameworks/
-    cp -rf mojoservice* $ROOTFS/usr/palm/frameworks/
+    for FRAMEWORK in `ls -d1 mojoservice*` ; do
+      mkdir -p $ROOTFS/usr/palm/frameworks/$FRAMEWORK/version/1.0/
+      cp -rf $FRAMEWORK/* $ROOTFS/usr/palm/frameworks/$FRAMEWORK/version/1.0/
+    done
 }
 
 ###########################################
@@ -488,7 +498,10 @@ function build_loadable-frameworks
     do_fetch openwebos/loadable-frameworks $1 loadable-frameworks
     cd $BASE/loadable-frameworks
     mkdir -p $ROOTFS/usr/palm/frameworks/
-    cp -rf calendar* contacts globalization $ROOTFS/usr/palm/frameworks/
+    for FRAMEWORK in `ls -d1 calendar* contacts globalization` ; do
+      mkdir -p $ROOTFS/usr/palm/frameworks/$FRAMEWORK/version/1.0/
+      cp -rf $FRAMEWORK/* $ROOTFS/usr/palm/frameworks/$FRAMEWORK/version/1.0/
+    done
 }
 
 ###########################################
@@ -498,7 +511,8 @@ function build_underscore
 {
     do_fetch openwebos/underscore $1 underscore submissions/
     mkdir -p $ROOTFS/usr/palm/frameworks/
-    cp -rf $BASE/underscore $ROOTFS/usr/palm/frameworks/
+    mkdir -p $ROOTFS/usr/palm/frameworks/underscore/version/1.0/
+    cp -rf $BASE/underscore/* $ROOTFS/usr/palm/frameworks/underscore/version/1.0/
 }
 
 ###########################################
@@ -536,7 +550,24 @@ function build_app-services
     mkdir -p $ROOTFS/usr/palm/services
     cp -rf com.palm.* $ROOTFS/usr/palm/services
     cp -rf account-templates $ROOTFS/usr/palm/services
-    cp -rf mojomail $ROOTFS/usr/palm/services
+}
+
+###########################################
+#  Fetch and build mojomail
+###########################################
+function build_mojomail
+{
+    #TODO: mojomail should probably be its own repo...
+    #do_fetch openwebos/app-services $1 mojomail
+    cd $BASE/mojomail/mojomail
+    for SUBDIR in `ls -1` ; do
+      mkdir -p $BASE/mojomail/mojomail/$SUBDIR/build
+      cd $BASE/mojomail/mojomail/$SUBDIR/build
+      sed -i 's!DESTINATION /!DESTINATION !' ../CMakeLists.txt
+      $CMAKE -D WEBOS_INSTALL_ROOT:PATH=${LUNA_STAGING} -DCMAKE_INSTALL_PREFIX=${LUNA_STAGING} ..
+      make $JOBS
+      make install
+    done
 }
 
 ##############################
@@ -935,15 +966,19 @@ build luna-prefs 0.91
 build luna-sysservice 0.91
 
 build enyo-1.0 128.2
+#TODO: need new tag for core-apps
 build core-apps master
 
 build foundation-frameworks 1.0
 build mojoservice-frameworks 1.0
 #TODO: need tag for loadable-frameworks:
 build loadable-frameworks master
-build app-services 1.0
+#TODO: need new tag for app-services
+build app-services master
 
-#TODO: need to add mojoloader and mojoservicelauncher
+#TODO: enable to build mojomail
+#build mojomail master
+
 build underscore 8
 build mojoloader master
 build mojoservicelauncher 67
@@ -955,7 +990,8 @@ build BrowserAdapter 0.3
 
 build nodejs 0.4.12-webos2
 build db8 54.15
-build configurator 1.0
+#TODO: need new tag for app-services
+build configurator master
 
 #NOTE: The following components need cmake 2.8.7 or newer, and webos cmake module:
 build activitymanager 107
@@ -964,7 +1000,6 @@ build libpalmsocket 30
 build libsandbox 15
 
 build jemalloc 11
-#TODO: filecache can't find cjson header:
 build filecache 53
 
 echo ""

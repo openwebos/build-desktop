@@ -103,7 +103,7 @@ LIB_DIR="${STAGING_DIR}/lib"
 ETC_DIR="${STAGING_DIR}/etc"
 
 # TODO: Consider moving ls2 dir to traditional locations (requires changes to scripts AND .conf files)
-CONF_DIR="${ROOTFS}"
+CONF_DIR="${ROOTFS}/etc"
 
 SRC_DIR="${HOME}/luna-desktop-binaries/luna-sysmgr/desktop-support"
 #LOGGING="--pmloglib"
