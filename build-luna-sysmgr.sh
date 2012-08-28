@@ -603,10 +603,10 @@ function build_luna-sysmgr
     mkdir -p $ROOTFS/usr/lib/luna
     cp -fs $LUNA_STAGING/bin/LunaSysMgr $ROOTFS/usr/lib/luna/LunaSysMgr
 
-    # put user scripts in $BASE, not $ROOTFS
-    cp -f desktop-support/service-bus.sh  $BASE/service-bus.sh
-    cp -f desktop-support/run-luna-sysmgr.sh  $BASE/run-luna-sysmgr.sh
-    cp -f desktop-support/install-luna-sysmgr.sh $BASE/install-luna-sysmgr.sh
+    #TODO: (temporary) remove old luna-sysmgr user scripts from $BASE
+    rm -f $BASE/service-bus.sh
+    rm -f $BASE/run-luna-sysmgr.sh
+    rm -f $BASE/install-luna-sysmgr.sh
 
     cp -f desktop-support/ls*.conf $ROOTFS/etc/ls2
 
