@@ -60,6 +60,7 @@ export SCRIPT_DIR=$PWD
 export PKG_CONFIG_PATH=$LUNA_STAGING/lib/pkgconfig:$LUNA_STAGING/usr/share/pkgconfig
 export MAKEFILES_DIR=$BASE/pmmakefiles
 
+# where's cmake? we prefer to use our own, and require the cmake-modules-webos module.
 if [ -x "${BASE}/cmake/bin/cmake" ] ; then
   export CMAKE="${BASE}/cmake/bin/cmake"
 else
@@ -104,6 +105,11 @@ do_fetch() {
 
     ZIPFILE="${BASE}/tarballs/`basename ${1}`_${2}.zip"
 
+    # if building from a tag, remove any cached "master" zipball to force it to be re-fetched
+    if [ "${2}" != "master" ] ; then
+      rm -f "${BASE}/tarballs/`basename ${1}`_master.zip"
+    fi
+
     if [ -e ${ZIPFILE} ] ; then
         file_type=$(file -bi ${ZIPFILE})
         if [ "${file_type}" != "application/zip; charset=binary" ] ; then
@@ -145,11 +151,12 @@ function build_cmake
 {
     mkdir -p $BASE/cmake
     cd $BASE/cmake
-    wget http://www.cmake.org/files/v2.8/cmake-2.8.8-Linux-i386.sh
-    chmod ugo+x cmake-2.8.8-Linux-i386.sh
-    echo "Answer Y and then N to install cmake into luna-desktop-binaries/cmake..."
-    echo
-    ./cmake-2.8.8-Linux-i386.sh
+    CMAKE_TARBALL="$BASE/tarballs/cmake-2.8.8-Linux-i386.tar.gz"
+    if [ ! -f "${CMAKE_TARBALL}" ] ; then
+        wget http://www.cmake.org/files/v2.8/cmake-2.8.8-Linux-i386.tar.gz -O ${CMAKE_TARBALL}
+    fi
+    tar zxf ${CMAKE_TARBALL} --strip-components=1
+    export CMAKE="${BASE}/cmake/bin/cmake"
 }
 
 ######################################
@@ -157,17 +164,14 @@ function build_cmake
 ######################################
 function build_cmake-modules-webos
 {
-    cd $BASE
-    if [ ! -d cmake-modules-webos ] ; then
-      do_fetch openwebos/cmake-modules-webos master cmake-modules-webos
-      mkdir -p $BASE/cmake-modules-webos/BUILD
-      cd $BASE/cmake-modules-webos/BUILD
-      $CMAKE .. -DCMAKE_INSTALL_PREFIX=${BASE}/cmake
-      make
-      #TODO: handle install on 12.04 too (needs: sudo make install)
-      mkdir -p $BASE/cmake
-      make install
-    fi
+    do_fetch openwebos/cmake-modules-webos $1 cmake-modules-webos submissions/
+    cd $BASE/cmake-modules-webos
+    mkdir -p BUILD
+    cd BUILD
+    $CMAKE .. -DCMAKE_INSTALL_PREFIX=${BASE}/cmake
+    make
+    mkdir -p $BASE/cmake
+    make install
 }
 
 ########################
@@ -644,9 +648,12 @@ function build_luna-sysmgr
     mkdir -p $ROOTFS/etc/palm/schemas
     cp -rf conf/*.schema $ROOTFS/etc/palm/schemas
 
-    mkdir -p $ROOTFS/etc/palm/db-kinds
-    cp -f mojodb/com.palm.securitypolicy $ROOTFS/etc/palm/db-kinds
-    cp -f mojodb/com.palm.securitypolicy.device $ROOTFS/etc/palm/db-kinds
+    #TODO: (temporary) remove old "db-kinds"; directory should be db_kinds (though db/kinds is also used)
+    rm -rf $ROOTFS/etc/palm/db-kinds
+
+    mkdir -p $ROOTFS/etc/palm/db_kinds
+    cp -f mojodb/com.palm.securitypolicy $ROOTFS/etc/palm/db_kinds
+    cp -f mojodb/com.palm.securitypolicy.device $ROOTFS/etc/palm/db_kinds
     mkdir -p $ROOTFS/etc/palm/db/permissions
     cp -f mojodb/com.palm.securitypolicy.permissions $ROOTFS/etc/palm/db/permissions/com.palm.securitypolicy
 
@@ -945,9 +952,9 @@ fi
 #    rm -f $BASE/luna-sysmgr/luna-desktop-build.stamp
 #fi
 
-#TODO: Needed to support for building on 11.04:
-#build cmake
-#build cmake-modules-webos
+# fetch cmake 2.8.8 and install it with the webos module
+build cmake
+build cmake-modules-webos 9
 
 build cjson 35
 build pbnjson 0.2
