@@ -22,7 +22,7 @@ a) Prerequisites
 
         sudo apt-get update
 
-        sudo apt-get install git git-core pkg-config cmake make autoconf \
+        sudo apt-get install git git-core pkg-config make autoconf \
 		libtool g++ tcl unzip libyajl-dev libyajl1 qt4-qmake \
 		libsqlite3-dev curl
 
@@ -37,41 +37,7 @@ a) Prerequisites
 
         sudo apt-get build-dep qt4-qmake
 
-  * cmake version 2.8.7 (or later) is required.  For Ubuntu 11.04, cmake must be manually installed since it's not available as an "apt-get install"-able package. 
-
-  * Here's how to install cmake 2.8.8 on Ubuntu 11.04 where the build script will look for it:
-
-		mkdir –p ~/luna-desktop-binaries/cmake
-		cd ~/luna-desktop-binaries/cmake
-		wget http://www.cmake.org/files/v2.8/cmake-2.8.8-Linux-i386.sh
-		chmod ugo+x cmake-2.8.8-Linux-i386.sh
-		# echo "Answer Y to the first question to accept the license..."
-		# echo "Then answer N to to the second question to install cmake into luna-desktop-binaries/cmake"
-		# echo
-		./cmake-2.8.8-Linux-i386.sh
-
-  *  Here's how to install cmake-modules-webos on Ubuntu 11.04 AFTER installing cmake (above):
-
-		cd ~/luna-desktop-binaries
-		git clone git@github.com:openwebos/cmake-modules-webos.git
-		cd cmake-modules-webos
-		mkdir BUILD
-		cd BUILD
-		~/luna-desktop-binaries/cmake/bin/cmake .. -DCMAKE_INSTALL_PREFIX=~/luna-desktop-binaries/cmake
-		make
-		make install
-
-  *  Here's how to install cmake-modules-webos on Ubuntu 12.04:
-
-		mkdir –p ~/luna-desktop-binaries
-		cd ~/luna-desktop-binaries
-		git clone git@github.com:openwebos/cmake-modules-webos.git
-		cd cmake-modules-webos
-		mkdir BUILD
-		cd BUILD
-		cmake ..
-		sudo make install
-
+  * cmake version 2.8.8 will be fetched and used for the build; there is no longer any need to install it.
 
 
 b) Getting the code
