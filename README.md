@@ -57,7 +57,7 @@ a) Prerequisites
 		cd cmake-modules-webos
 		mkdir BUILD
 		cd BUILD
-		~/luna-desktop-binaries/cmake/bin/cmake .. -DCMAKE\_INSTALL\_PREFIX=~/luna-desktop-binaries/cmake
+		~/luna-desktop-binaries/cmake/bin/cmake .. -DCMAKE_INSTALL_PREFIX=~/luna-desktop-binaries/cmake
 		make
 		make install
 
