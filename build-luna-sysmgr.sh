@@ -447,7 +447,6 @@ function build_enyo-1.0
     cp -rf framework/* $ROOTFS/usr/palm/frameworks/enyo/0.10/framework
 }
 
-
 ###########################################
 #  Fetch and build Core Apps
 ###########################################
@@ -458,7 +457,6 @@ function build_core-apps
     mkdir -p $ROOTFS/usr/palm/applications
     cp -rf com.palm.app.* $ROOTFS/usr/palm/applications/
 }
-
 
 ###########################################
 #  Fetch and build foundation-frameworks
@@ -471,7 +469,6 @@ function build_foundation-frameworks
     cp -rf foundations* $ROOTFS/usr/palm/frameworks/
 }
 
-
 ###########################################
 #  Fetch and build mojoservice-frameworks
 ###########################################
@@ -482,7 +479,6 @@ function build_mojoservice-frameworks
     mkdir -p $ROOTFS/usr/palm/frameworks/
     cp -rf mojoservice* $ROOTFS/usr/palm/frameworks/
 }
-
 
 ###########################################
 #  Fetch and build loadable-frameworks
@@ -495,6 +491,40 @@ function build_loadable-frameworks
     cp -rf calendar* contacts globalization $ROOTFS/usr/palm/frameworks/
 }
 
+###########################################
+#  Fetch and build underscore
+###########################################
+function build_underscore
+{
+    do_fetch openwebos/underscore $1 underscore submissions/
+    mkdir -p $ROOTFS/usr/palm/frameworks/
+    cp -rf $BASE/underscore $ROOTFS/usr/palm/frameworks/
+}
+
+###########################################
+#  Fetch and build mojoloader
+###########################################
+function build_mojoloader
+{
+    #TODO: mojoloader should be moved to openwebos/loadable-frameworks
+    do_fetch openwebos/build-desktop $1 mojoloader
+    mkdir -p $ROOTFS/usr/palm/frameworks/
+    cp -rf $BASE/mojoloader/mojoloader/mojoloader.js $ROOTFS/usr/palm/frameworks/
+}
+
+###########################################
+#  Fetch and build mojoservicelauncher
+###########################################
+function build_mojoservicelauncher
+{
+    do_fetch openwebos/mojoservicelauncher $1 mojoservicelauncher submissions/
+    mkdir -p $BASE/mojoservicelauncher/build
+    cd $BASE/mojoservicelauncher/build
+    sed -i 's!DESTINATION /!DESTINATION !' ../CMakeLists.txt
+    $CMAKE -D WEBOS_INSTALL_ROOT:PATH=${LUNA_STAGING} -DCMAKE_INSTALL_PREFIX=${LUNA_STAGING} ..
+    make $JOBS
+    make install
+}
 
 ###########################################
 #  Fetch and build app-services
@@ -508,7 +538,6 @@ function build_app-services
     cp -rf account-templates $ROOTFS/usr/palm/services
     cp -rf mojomail $ROOTFS/usr/palm/services
 }
-
 
 ##############################
 #  Fetch and build luna-sysmgr
@@ -915,6 +944,9 @@ build loadable-frameworks master
 build app-services 1.0
 
 #TODO: need to add mojoloader and mojoservicelauncher
+build underscore 8
+build mojoloader master
+build mojoservicelauncher 66
 
 build WebKitSupplemental 0.4
 build AdapterBase 0.2
