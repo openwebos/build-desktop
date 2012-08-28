@@ -946,7 +946,7 @@ build app-services 1.0
 #TODO: need to add mojoloader and mojoservicelauncher
 build underscore 8
 build mojoloader master
-build mojoservicelauncher 66
+build mojoservicelauncher 67
 
 build WebKitSupplemental 0.4
 build AdapterBase 0.2
