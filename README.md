@@ -9,7 +9,9 @@ This is the current active development repository for the desktop build scripts 
 How to Build on Linux
 =====================
 
-Note:  The build script has been successfully tested on both Ubuntu 11.04 and 12.04 in 32bit mode.
+Note:  The build script has been successfully tested on both Ubuntu 11.04 and 12.04 in 32-bit mode.
+
+Note:  Builds on 64-bit machines are not currently supported (or working).
 
 a) Prerequisites
 ----------------
