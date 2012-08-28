@@ -761,22 +761,30 @@ function build_BrowserAdapter
 #########################
 function build_nodejs
 {
-    do_fetch openwebos/nodejs $1 nodejs versions/
+    do_fetch openwebos/nodejs $1 nodejs submissions/
     mkdir -p $BASE/nodejs/build
     cd $BASE/nodejs/build
     $CMAKE .. -DNO_TESTS=True -DNO_UTILS=True -DCMAKE_INSTALL_PREFIX=${LUNA_STAGING} -DCMAKE_BUILD_TYPE=Release
     make $JOBS
     make install
+}
 
-    # stage
-    mkdir -p ${LUNA_STAGING}/bin/nodejs/bin
-    install -m 755 tools/node-waf ${LUNA_STAGING}/bin/nodejs/bin
-
-    mkdir -p ${LUNA_STAGING}/bin/nodejs/lib/node/wafadmin
-    tar cf - tools/wafadmin  | tar xf - --strip-components 2 -C ${LUNA_STAGING}/bin/nodejs/lib/node/wafadmin
-
-    # install
-    #tools/waf-light install -vv
+#################################
+# Fetch and build node-addons
+#################################
+function build_node-addon
+{
+    do_fetch "openwebos/nodejs-module-webos-${1}" $2 nodejs-module-webos-${1} submissions/
+    mkdir -p $BASE/nodejs-module-webos-${1}/build
+    cd $BASE/nodejs-module-webos-${1}/build
+    #TODO: remove patch when dynaload is updated
+    if [ "$1" = "dynaload" ] ; then
+        sed -i 's/file_string()/string()/g' ../src/node_webos.cpp
+    fi
+    $CMAKE -D WEBOS_INSTALL_ROOT:PATH=${LUNA_STAGING} -DCMAKE_INSTALL_PREFIX=${LUNA_STAGING} ..
+    make $JOBS VERBOSE=1
+    #make $JOBS
+    make install
 }
 
 #####################
@@ -888,6 +896,8 @@ function build
 {
     if [ "$1" = "webkit" ] ; then
         BUILD_DIR=$WEBKIT_DIR
+    elif [ "$1" = "node-addon" ] ; then
+        BUILD_DIR="nodejs-module-webos-${2}"
     else
         BUILD_DIR=$1
     fi
@@ -994,7 +1004,11 @@ build AdapterBase 0.2
 build BrowserServer 0.4
 build BrowserAdapter 0.3
 
-build nodejs 0.4.12-webos2
+build nodejs 33
+build node-addon sysbus 23
+build node-addon pmlog 10
+build node-addon dynaload 9
+
 build db8 54.15
 #TODO: need new tag for app-services
 build configurator master

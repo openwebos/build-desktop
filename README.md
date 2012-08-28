@@ -33,7 +33,7 @@ a) Prerequisites
 		flex libicu-dev
 
         sudo apt-get install libboost-all-dev liburiparser-dev libc-ares-dev \
-		libsigc++-2.0-dev libglibmm-2.4-dev libdb4.8-dev
+		libsigc++-2.0-dev libglibmm-2.4-dev libdb4.8-dev libcurl4-openssl-dev
 
         sudo apt-get build-dep qt4-qmake
 
