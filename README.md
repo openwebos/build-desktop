@@ -3,7 +3,7 @@ build-desktop
 
 The scripts in this repository are used to build, install, and run Open webOS on a Linux desktop computer.
  
-This is the current active development repository for the desktop build scripts.
+This is the current active development repository for the desktop build scripts for Open webOS.
 
 
 How to Build on Linux
@@ -14,7 +14,11 @@ Note:  The build script has been successfully tested on both Ubuntu 11.04 and 12
 a) Prerequisites
 ----------------
 
-Install components needed to build luna-sysmgr by typing the following:
+  * Ensure you have a fast and reliable internet connection since you'll be downloading about 500MB
+
+  * Ensure you have at least 4GB of available disk space
+
+  * Install the following components needed to build (and run) Open webOS on the desktop by typing the following:
 
         sudo apt-get update
 
@@ -33,35 +37,61 @@ Install components needed to build luna-sysmgr by typing the following:
 
         sudo apt-get build-dep qt4-qmake
 
-  * Ensure you have a fast and reliable internet connection since you'll be downloading about 310MB
-  
-  * Ensure you have at least 3GB of available disk space
+  * cmake version 2.8.7 (or later) is required.  For Ubuntu 11.04, cmake must be manually installed since it's not available as an "apt-get install"-able package. 
 
-  * cmake 2.8.7 is required.  For Ubuntu 11.04 it must be built/installed manually.
+  * Here's how to install cmake 2.8.8 on Ubuntu 11.04 where the build script will look for it:
+
+		mkdir –p ~/luna-desktop-binaries/cmake
+		cd ~/luna-desktop-binaries/cmake
+		wget http://www.cmake.org/files/v2.8/cmake-2.8.8-Linux-i386.sh
+		chmod ugo+x cmake-2.8.8-Linux-i386.sh
+		# echo "Answer Y to the first question to accept the license..."
+		# echo "Then answer N to to the second question to install cmake into luna-desktop-binaries/cmake"
+		# echo
+		./cmake-2.8.8-Linux-i386.sh
+
+  *  Here's how to install cmake-modules-webos on Ubuntu 11.04 AFTER installing cmake (above):
+
+		cd ~/luna-desktop-binaries
+		git clone ssh://gerrit.palm.com/cmake-modules-webos.git
+		cd cmake-modules-webos
+		mkdir BUILD
+		cd BUILD
+		~/luna-desktop-binaries/cmake/bin/cmake .. -DCMAKE\_INSTALL\_PREFIX=~/luna-desktop-binaries/cmake
+		make
+		make install
+
+  *  Here's how to install cmake-modules-webos on Ubuntu 12.04:
+
+		mkdir –p ~/luna-desktop-binaries
+		cd ~/luna-desktop-binaries
+		git clone git@github.com:openwebos/cmake-modules-webos.git
+		cd cmake-modules-webos
+		mkdir BUILD
+		cd BUILD
+		cmake ..
+		sudo make install
+
+
 
 b) Getting the code
 -------------------
 
-Get the zip file and unzip it into a known directory.
+Get the build-desktop zip file and unzip it into a known directory.
   
-c) Building luna-sysmgr
------------------------
+c) Building Open webOS
+----------------------
  
-Change to the folder where you downloaded the build script and run it:
-
+Change to the folder where you downloaded the build-desktop scripts and run the build script:
 
         ./build-luna-sysmgr.sh
 
 Note: This will typically take one to three hours, depending on the speed of your system and of your internet connection.
 
-d) Installing luna-sysmgr
--------------------------
+d) Installing Open webOS
+------------------------
 
-1) Change to the folder where the files are located:
-
-        cd ~/luna-desktop-binaries
-
-2) Install expected folders and links into /etc/palm:
+1) Change to the folder where the build-desktop scripts are located (if necessary) and run the "install" script to create expected folders and symlinks into various system directories:
 
         sudo ./install-luna-sysmgr.sh
 
@@ -70,9 +100,7 @@ How to Run on Linux
 
 Please note that this version of the build provides minimal runtime functionality.
 
-1) Change to the folder where the files are located:
-
-        cd ~/luna-desktop-binaries
+1) Change to the folder where the build-desktop scripts are located (if necessary).
 
 2) Start up the service bus:
 
@@ -89,8 +117,8 @@ When you are finished running luna-sysmgr, stop the service bus:
 
 # Known Issues
 
-1) Error messages are generated in the LunaService log file, which can be ignored.
-2) Since the components supporting "Just Type" have not yet been released, attempting to enter text in the "Just Type" field will not work as expected.
+  * Error messages are generated in the LunaService log file, which can be ignored.
+  * Since the components supporting "Just Type" have not yet been released, attempting to enter text in the "Just Type" field will not work as expected.
 
 # Copyright and License Information
 
