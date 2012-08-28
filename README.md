@@ -53,7 +53,7 @@ a) Prerequisites
   *  Here's how to install cmake-modules-webos on Ubuntu 11.04 AFTER installing cmake (above):
 
 		cd ~/luna-desktop-binaries
-		git clone ssh://gerrit.palm.com/cmake-modules-webos.git
+		git clone git@github.com:openwebos/cmake-modules-webos.git
 		cd cmake-modules-webos
 		mkdir BUILD
 		cd BUILD
