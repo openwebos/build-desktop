@@ -41,6 +41,10 @@ a) Prerequisites
 		libc-ares-dev libsigc++-2.0-dev libglibmm-2.4-dev libdb4.8-dev \
 		libcurl4-openssl-dev
 
+        sudo apt-get install xcb libx11-xcb libx11-xcb-dev libxcb-sync0-dev \
+		libxcb1-dev libxcb-keysyms1-dev libxcb-image0-dev libxcb-render-util0-dev \
+		libxcb-icccm1-dev
+
         sudo apt-get build-dep qt4-qmake
 
   * cmake version 2.8.7 will be fetched and used for the build; there is no need to install it.
