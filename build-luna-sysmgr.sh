@@ -562,7 +562,7 @@ function build_app-services
 function build_mojomail
 {
     #TODO: mojomail should probably be its own repo...
-    #do_fetch openwebos/app-services $1 mojomail
+    do_fetch openwebos/app-services $1 mojomail
     cd $BASE/mojomail/mojomail
     for SUBDIR in `ls -1` ; do
       mkdir -p $BASE/mojomail/mojomail/$SUBDIR/build
@@ -983,8 +983,7 @@ build loadable-frameworks master
 #TODO: need new tag for app-services
 build app-services master
 
-#TODO: enable to build mojomail
-#build mojomail master
+build mojomail master
 
 build underscore 8
 build mojoloader master
