@@ -1129,7 +1129,7 @@ build BrowserAdapter 0.3
 build nodejs 33
 build node-addon sysbus 25
 build node-addon pmlog 10
-build node-addon dynaload 10
+build node-addon dynaload 11
 
 #build db8 54.15
 build db8 55
