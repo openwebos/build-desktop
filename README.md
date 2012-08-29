@@ -34,8 +34,10 @@ a) Prerequisites
 		libgstreamer0.10-dev libgstreamer-plugins-base0.10-dev \
 		flex libicu-dev
 
-        sudo apt-get install libboost-all-dev liburiparser-dev libc-ares-dev \
-		libsigc++-2.0-dev libglibmm-2.4-dev libdb4.8-dev libcurl4-openssl-dev
+        sudo apt-get install libboost-system-dev libboost-filesystem-dev \
+		libboost-regex-dev libboost-program-options-dev liburiparser-dev \
+		libc-ares-dev libsigc++-2.0-dev libglibmm-2.4-dev libdb4.8-dev \
+		libcurl4-openssl-dev
 
         sudo apt-get build-dep qt4-qmake
 
