@@ -39,7 +39,7 @@ a) Prerequisites
 
         sudo apt-get build-dep qt4-qmake
 
-  * cmake version 2.8.8 will be fetched and used for the build; there is no longer any need to install it.
+  * cmake version 2.8.7 will be fetched and used for the build; there is no need to install it.
 
 
 b) Getting the code
