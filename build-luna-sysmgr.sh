@@ -149,11 +149,12 @@ do_fetch() {
 ########################
 function build_cmake
 {
+    CMAKE_VER="2.8.7"
     mkdir -p $BASE/cmake
     cd $BASE/cmake
-    CMAKE_TARBALL="$BASE/tarballs/cmake-2.8.8-Linux-i386.tar.gz"
+    CMAKE_TARBALL="$BASE/tarballs/cmake-${CMAKE_VER}-Linux-i386.tar.gz"
     if [ ! -f "${CMAKE_TARBALL}" ] ; then
-        wget http://www.cmake.org/files/v2.8/cmake-2.8.8-Linux-i386.tar.gz -O ${CMAKE_TARBALL}
+        wget http://www.cmake.org/files/v2.8/cmake-${CMAKE_VER}-Linux-i386.tar.gz -O ${CMAKE_TARBALL}
     fi
     tar zxf ${CMAKE_TARBALL} --strip-components=1
     export CMAKE="${BASE}/cmake/bin/cmake"
@@ -1140,12 +1141,12 @@ build activitymanager 108
 build pmstatemachineengine 13
 build libpalmsocket 30
 build libsandbox 15
-
-#NOTE: mojomail depends on libsandbox, libpalmsocket, and pmstatemachine; and lives in app-services repo
-build mojomail 1.01
-
 build jemalloc 11
 build filecache 54
+
+#NOTE: mojomail depends on libsandbox, libpalmsocket, and pmstatemachine; and lives in app-services repo
+#TODO: fix mojomail; it needs mojodb.pc (missing) and has a few other build issues
+#build mojomail 1.01
 
 echo ""
 echo "Complete. "
