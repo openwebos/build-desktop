@@ -38,6 +38,9 @@ if [ "$1" = "--help" ] ; then
     echo "    -q      redirect console output to /tmp/webos/LunaSysMgr.log"
     echo " "
     exit
+elif [ "$1" = "--version" ] ; then
+    echo "Desktop run script for Open webOS #3"
+    exit
 elif [ "$1" = "-q" ] ; then
     REDIRECT="-q"
 elif [ -n "$1" ] ; then

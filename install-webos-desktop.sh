@@ -25,9 +25,6 @@
 
 set -x
 
-# TODO: Change this to something more meaningful for the build-desktop repo
-export LSM_TAG="0.824"
-
 export BASE="${HOME}/luna-desktop-binaries"
 export ROOTFS="${BASE}/rootfs"
 
@@ -43,7 +40,7 @@ if [ "$1" = "--help" ] ; then
     echo " "
     exit
 elif [ "$1" = "--version" ] ; then
-    echo "Install build script for luna-sysmgr ${LSM_TAG}"
+    echo "Desktop install script for Open webOS #3"
     exit
 elif [ -n "$1" ] && [ "$1" != "remove" ] ; then
     echo "Parameter $1 not recognized"
