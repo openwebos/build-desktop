@@ -91,6 +91,7 @@ hubds_start() {
 }
 
 services_stop() {
+  echo
   for SERVICE in ${STATIC_SERVICES} ; do
     killall ${SERVICE} && echo "Killed ${SERVICE}"
   done
@@ -105,7 +106,6 @@ service_start() {
     if [ -x ${SERVICE_BIN_DIR}/${SERVICE} ] ; then
       echo
       echo "Starting service: ${SERVICE} ..."
-      echo
       ${SERVICE_BIN_DIR}/${SERVICE} "$@" &
       sleep 1
     else
@@ -127,6 +127,10 @@ services_start() {
       ;;
     esac
   done
+  sleep 1
+  echo
+  echo "Services started!"
+  echo "(Type: '${0} stop' to stop services and hub daemons.)"
 }
 
 hubd_monitor() {
@@ -172,21 +176,30 @@ else
   shift
 fi
 
+echo
+
 case "$CMD" in
 start)
+  echo "Halting old services..."
   services_stop
   hubds_stop
   hubds_start
-  sleep 1
+  echo
   ;;
 stop)
+  echo "Halting services..."
   services_stop
+  echo
   hubds_stop
+  echo
   ;;
 
 services)
+  echo "Halting old services..."
   services_stop
+  echo
   services_start
+  echo
   ;;
 LunaSysService)
   service_start LunaSysService ;;
