@@ -72,6 +72,8 @@ PROCS=`grep -c processor /proc/cpuinfo`
 
 export WEBKIT_DIR="WebKit"
 
+[ -t 1 ] && curl_progress_option='-#' || curl_progress_option='-s -S'
+
 ############################################
 # Optimized fetch process.
 # Parameters:
@@ -126,7 +128,7 @@ do_fetch() {
             fi
         else
             echo "About to fetch ${1}#${GIT_BRANCH} from github"
-            curl -L -R -# ${GIT_SOURCE} -o "${ZIPFILE}"
+            curl -L -R ${curl_progress_option} ${GIT_SOURCE} -o "${ZIPFILE}"
         fi
     fi
     if [ -e ${ZIPFILE} ] ; then
