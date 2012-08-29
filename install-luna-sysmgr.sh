@@ -25,7 +25,8 @@
 
 set -x
 
-export LSM_TAG="0.823"
+# TODO: Change this to something more meaningful for the build-desktop repo
+export LSM_TAG="0.824"
 
 export BASE="${HOME}/luna-desktop-binaries"
 export ROOTFS="${BASE}/rootfs"
@@ -47,21 +48,21 @@ elif [ "$1" = "--version" ] ; then
 elif [ -n "$1" ] && [ "$1" != "remove" ] ; then
     echo "Parameter $1 not recognized"
     exit
-elif [ ! -d ${ROOTFS} ] || [ ! -d ${ROOTFS}/ls2/roles/prv ] || \
-	[ ! -d ${ROOTFS}/usr/palm/frameworks/enyo ] || [ ! -d ${ROOTFS}/usr/palm/applications ] ; then
-    # force core-apps to re-install (if missing)
-    if [ ! -d ${ROOTFS}/usr/palm/applications ] ; then
-        rm -f ${BASE}/core-apps/luna-desktop-build.stamp
-    fi
-    # force framework to re-install (if missing)
-    if [ ! -d ${ROOTFS}/usr/palm/frameworks/enyo ] ; then
-        rm -f ${BASE}/enyo-1.0/luna-desktop-build.stamp
-    fi
-    # force luna-sysmgr to re-install its files
-    rm -f ${BASE}/luna-sysmgr/luna-desktop-build.stamp
-    
-    echo "Please run build-luna-sysmgr.sh first"
-    exit
+#elif [ ! -d ${ROOTFS} ] || [ ! -d ${ROOTFS}/ls2/roles/prv ] || \
+#	[ ! -d ${ROOTFS}/usr/palm/frameworks/enyo ] || [ ! -d ${ROOTFS}/usr/palm/applications ] ; then
+#    # force core-apps to re-install (if missing)
+#    if [ ! -d ${ROOTFS}/usr/palm/applications ] ; then
+#        rm -f ${BASE}/core-apps/luna-desktop-build.stamp
+#    fi
+#    # force framework to re-install (if missing)
+#    if [ ! -d ${ROOTFS}/usr/palm/frameworks/enyo ] ; then
+#        rm -f ${BASE}/enyo-1.0/luna-desktop-build.stamp
+#    fi
+#    # force luna-sysmgr to re-install its files
+#    rm -f ${BASE}/luna-sysmgr/luna-desktop-build.stamp
+#    
+#    echo "Please run build-luna-sysmgr.sh first"
+#    exit
 fi
 
 ###############################
@@ -157,24 +158,34 @@ fi
 echo "Installing links for luna-sysmgr in /etc/ls2, /etc/palm, /usr/palm, "
 echo "    /var/luna, /var/palm, /usr/lib/luna and /usr/share/ls2"
 
-ln -sf ${ROOTFS}/etc/palm /etc/palm
-
+ln -sf -T ${ROOTFS}/etc/palm /etc/palm
+ln -sf -T ${ROOTFS}/etc/ls2 /etc/ls2
 mkdir -p /usr/share/ls2
-ln -sf ${ROOTFS}/ls2/roles /usr/share/ls2/roles
-ln -sf -T ${ROOTFS}/ls2 /etc/ls2
+
+ln -sf -T ${ROOTFS}/usr/share/ls2/roles /usr/share/ls2/roles
+# NOTE: desktop ls2 .conf files will look for services in /usr/share/ls2/*services
+# NOTE: but on device they live in /usr/share/dbus-1/*services (which is used by Ubuntu dbus)
+ln -sf -T ${ROOTFS}/usr/share/ls2/services /usr/share/ls2/services
+ln -sf -T ${ROOTFS}/usr/share/ls2/system-services /usr/share/ls2/system-services
 
 ln -sf ${ROOTFS}/usr/palm /usr/palm
 
-# TODO: Should be /var/opt/luna/dbus-1
+# TODO: remove this
+#mkdir -p /usr/share/dbus-1/services
+#mkdir -p /usr/share/dbus-1/system-services
+#cp -fs ${ROOTFS}/share/dbus-1/system-services/com.palm.* /usr/share/dbus-1/system-services
 
-mkdir -p /usr/share/dbus-1/services
-cp -fs ${ROOTFS}/share/dbus-1/services/com.palm.* /usr/share/dbus-1/services
-mkdir -p /usr/share/dbus-1/system-services
-cp -fs ${ROOTFS}/share/dbus-1/system-services/com.palm.* /usr/share/dbus-1/system-services
+# TODO: remove files installed by previous install script.  or not.
+#rm -f /usr/share/dbus-1/services/com.palm.*
+#rm -f /usr/share/dbus-1/system-services/com.palm.*
 
-ln -sf ${ROOTFS}/var/palm /var/palm
+ln -sf ${ROOTFS}/var/db /var/db
+ln -sf ${ROOTFS}/var/file-cache /var/file-cache
 ln -sf ${ROOTFS}/var/luna /var/luna
+ln -sf ${ROOTFS}/var/palm /var/palm
+
 ln -sf ${ROOTFS}/usr/lib/luna /usr/lib/luna
+
 mkdir -p /var/usr
 ln -sf ${ROOTFS}/var/usr/palm /var/usr/palm
 

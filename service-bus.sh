@@ -30,6 +30,11 @@ usage() {
 
 	Commands:
 	    start                      Starts the pub/priv ls-hubd instances
+	    services                   Starts the static native services
+                                       (LunaSysService, filecache, activitymanager, mojodb-luna)
+                                       (services can also be started individually by name)
+	    init                       Perform first-time initialization (db and local account)
+	    send                       Sends a service bus request (using luna-send)
 	    stop                       Stops currently running ls-hubd and services
 	    status                     Displays status of pub/priv ls-hubd instances
 	    monitor [...]              Invokes ls-monitor
@@ -77,15 +82,51 @@ hubds_stop() {
 }
 
 hubds_start() {
-  #mkdir -p ${CONF_DIR}/ls2/roles
-  #mkdir -p ${CONF_DIR}/ls2/services
-  #mkdir -p ${CONF_DIR}/ls2/system-services
   ls-hubd --conf ${CONF_DIR}/ls2/ls-private.conf ${LOGGING} 2>&1 &
   ls-hubd --public --conf ${CONF_DIR}/ls2/ls-public.conf ${LOGGING} 2>&1 &
   sleep 1
   echo
   echo "hub daemons started!"
   echo "(Type: '${0} stop' to stop hub daemons.)"
+}
+
+services_stop() {
+  for SERVICE in ${STATIC_SERVICES} ; do
+    killall ${SERVICE} && echo "Killed ${SERVICE}"
+  done
+  killall mojomail-imap && echo "Killed ${SERVICE}"
+  killall mojomail-pop && echo "Killed ${SERVICE}"
+  killall mojomail-smtp && echo "Killed ${SERVICE}"
+}
+
+service_start() {
+    SERVICE=${1}
+    shift
+    if [ -x ${SERVICE_BIN_DIR}/${SERVICE} ] ; then
+      echo
+      echo "Starting service: ${SERVICE} ..."
+      echo
+      ${SERVICE_BIN_DIR}/${SERVICE} "$@" &
+      sleep 1
+    else
+      echo
+      echo "ERROR: ${SERVICE} not present in ${SERVICE_BIN_DIR}"
+      echo
+      exit 1
+    fi
+}
+
+services_start() {
+  for SERVICE in ${STATIC_SERVICES} ; do
+    case "${SERVICE}" in
+    mojodb-luna)
+      service_start mojodb-luna -c /etc/palm/mojodb.conf /var/db
+      ;;
+    *)
+      service_start ${SERVICE}
+      ;;
+    esac
+  done
 }
 
 hubd_monitor() {
@@ -100,17 +141,29 @@ LUNA_STAGING="${BASE}/staging"
 STAGING_DIR="${LUNA_STAGING}"
 BIN_DIR="${STAGING_DIR}/bin"
 LIB_DIR="${STAGING_DIR}/lib"
+USR_LIB_DIR="${STAGING_DIR}/usr/lib"
 ETC_DIR="${STAGING_DIR}/etc"
+# NOTE: this links to ROOTFS/usr/lib/luna which is what the role and service files refer to
+SERVICE_BIN_DIR="/usr/lib/luna"
+STATIC_SERVICES="LunaSysService filecache activitymanager mojodb-luna"
 
 # TODO: Consider moving ls2 dir to traditional locations (requires changes to scripts AND .conf files)
 CONF_DIR="${ROOTFS}/etc"
+mkdir -p ${ROOTFS}/etc/ls2
+if [ ! -f "${ROOTFS}/etc/ls2/ls-private.conf" ] || grep -qs dbus ${ROOTFS}/etc/ls2/ls-private.conf ; then
+  cp -f ls2/ls-private.conf ${ROOTFS}/etc/ls2
+fi
+if [ ! -f "${ROOTFS}/etc/ls2/ls-public.conf" ] || grep -qs dbus ${ROOTFS}/etc/ls2/ls-public.conf ; then
+  cp -f ls2/ls-public.conf ${ROOTFS}/etc/ls2
+fi
+
 
 SRC_DIR="${HOME}/luna-desktop-binaries/luna-sysmgr/desktop-support"
 #LOGGING="--pmloglib"
 
 export LD_PRELOAD=/lib/i386-linux-gnu/libSegFault.so
-export LD_LIBRARY_PATH=${LIB_DIR}:${LD_LIBRARY_PATH}
-export PATH=${BIN_DIR}:${PATH}
+export LD_LIBRARY_PATH=${LIB_DIR}:${USR_LIB_DIR}:${LD_LIBRARY_PATH}
+export PATH=${SERVICE_BIN_DIR}:${BIN_DIR}:${PATH}
 
 CMD="$1"
 if [ -z "$CMD" ]; then
@@ -121,12 +174,39 @@ fi
 
 case "$CMD" in
 start)
+  services_stop
   hubds_stop
   hubds_start
   sleep 1
   ;;
 stop)
-  hubds_stop ;;
+  services_stop
+  hubds_stop
+  ;;
+
+services)
+  services_stop
+  services_start
+  ;;
+LunaSysService)
+  service_start LunaSysService ;;
+filecache)
+  service_start filecache ;;
+activitymanager)
+  service_start activitymanager ;;
+mojodb|mojodb-luna|db8)
+  service_start mojodb-luna -c /etc/palm/mojodb.conf /var/db
+  ;;
+
+send)
+  luna-send "$@"
+  ;;
+init)
+  luna-send -n 1 palm://com.palm.configurator/run '{"types":["dbkinds","filecache"]}'
+  luna-send -n 1 palm://com.palm.configurator/run '{"types":["dbpermissions"]}'
+  luna-send -n 1 palm://com.palm.service.accounts/createLocalAccount '{}'
+  ;;
+
 status)
   hubds_status ;;
 monitor)

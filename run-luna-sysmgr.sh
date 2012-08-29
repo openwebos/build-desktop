@@ -43,7 +43,7 @@ elif [ "$1" = "-q" ] ; then
 elif [ -n "$1" ] ; then
     echo "Parameter $1 not recognized"
     exit
-elif [ ! -d ${STAGING_DIR} ]  || [ ! -d ${ROOTFS}/ls2/roles/prv ]; then
+elif [ ! -d ${STAGING_DIR} ]  || [ ! -x ${ROOTFS}/usr/lib/luna/LunaSysMgr ]; then
     echo "First build luna-sysmgr"
     exit
 fi

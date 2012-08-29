@@ -423,12 +423,13 @@ function build_luna-sysservice
     do_fetch openwebos/luna-sysservice $1 luna-sysservice
     cd $BASE/luna-sysservice
 
-    #TODO: Switch to cmake build
-    #mkdir -p build
-    #cd build
+    #TODO: Switch to cmake build (after pbnjson + cmake)
+    #mkdir -p $BASE/luna-sysservice/build
+    #cd $BASE/luna-sysservice/build
     #sed -i 's/REQUIRED uriparser/REQUIRED liburiparser/' ../CMakeLists.txt
     #PKG_CONFIG_PATH=$LUNA_STAGING/lib/pkgconfig \
     #$CMAKE .. -DCMAKE_INSTALL_PREFIX=${LUNA_STAGING} -DCMAKE_BUILD_TYPE=Release
+    #$CMAKE -D WEBOS_INSTALL_ROOT:PATH=${LUNA_STAGING} -DCMAKE_INSTALL_PREFIX=${LUNA_STAGING} ..
     #make $JOBS
     #make install
 
@@ -438,7 +439,19 @@ function build_luna-sysservice
     # link fails without -rpath-link to help libpbnjson_cpp.so find libpbnjson_c.so
     export LDFLAGS="-Wl,-rpath-link $LUNA_STAGING/lib"
     make $JOBS -f Makefile.Ubuntu
-    cp debug-x86/LunaSysService $LUNA_STAGING/bin
+
+    #cp debug-x86/LunaSysService $LUNA_STAGING/bin
+    # NOTE: Make binary findable in /usr/lib/luna so ls2 can match the role file
+    cp -f debug-x86/LunaSysService $ROOTFS/usr/lib/luna/
+
+    # TODO: cmake should do this for us (after we switch)
+    cp -rf files/conf/* ${ROOTFS}/etc/palm
+    cp -f desktop-support/com.palm.systemservice.json.pub $ROOTFS/usr/share/ls2/roles/pub/com.palm.systemservice.json
+    cp -f desktop-support/com.palm.systemservice.json.prv $ROOTFS/usr/share/ls2/roles/prv/com.palm.systemservice.json
+    cp -f desktop-support/com.palm.systemservice.service.pub $ROOTFS/usr/share/ls2/services/com.palm.systemservice.service
+    cp -f desktop-support/com.palm.systemservice.service.prv $ROOTFS/usr/share/ls2/system-services/com.palm.systemservice.service
+    mkdir -p $ROOTFS/etc/palm/backup
+    cp -f desktop-support/com.palm.systemservice.backupRegistration.json $ROOTFS/etc/palm/backup/com.palm.systemservice
 }
 
 ###########################################
@@ -463,7 +476,11 @@ function build_core-apps
     sed -i 's/com.palm.calculator/com.palm.app.calculator/' com.palm.app.calculator/appinfo.json
 
     mkdir -p $ROOTFS/usr/palm/applications
-    cp -rf com.palm.app.* $ROOTFS/usr/palm/applications/
+    for APP in com.palm.app.* ; do
+      cp -rf ${APP} $ROOTFS/usr/palm/applications/
+      cp -rf ${APP}/configuration/db/kinds/* $ROOTFS/etc/palm/db/kinds/ 2>/dev/null || true
+      cp -rf ${APP}/configuration/db/permissions/* $ROOTFS/etc/palm/db/permissions/ 2>/dev/null || true
+    done
 }
 
 ###########################################
@@ -542,6 +559,15 @@ function build_mojoservicelauncher
     $CMAKE -D WEBOS_INSTALL_ROOT:PATH=${LUNA_STAGING} -DCMAKE_INSTALL_PREFIX=${LUNA_STAGING} ..
     make $JOBS
     make install
+    # copy mojoservicelauncher files from staging to rootfs
+    mkdir -p $ROOTFS/usr/palm/services/jsservicelauncher
+    cp -f $LUNA_STAGING/usr/palm/services/jsservicelauncher/* $ROOTFS/usr/palm/services/jsservicelauncher
+    # most services launch with run-js-service
+    chmod ugo+x ../desktop-support/run-js-service
+    cp -f ../desktop-support/run-js-service $ROOTFS/usr/lib/luna/
+    # jslauncher is used by com.palm.service.calendar.reminders
+    chmod ugo+x ../desktop-support/jslauncher
+    cp -f ../desktop-support/jslauncher $ROOTFS/usr/lib/luna/
 }
 
 ###########################################
@@ -551,9 +577,29 @@ function build_app-services
 {
     do_fetch openwebos/app-services $1 app-services
     cd $BASE/app-services
+    rm -rf mojomail
     mkdir -p $ROOTFS/usr/palm/services
-    cp -rf com.palm.* $ROOTFS/usr/palm/services
-    cp -rf account-templates $ROOTFS/usr/palm/services
+
+    for SERVICE in com.palm.service.* ; do
+      cp -rf ${SERVICE} $ROOTFS/usr/palm/services/
+      cp -rf ${SERVICE}/db/kinds/* $ROOTFS/etc/palm/db/kinds/ 2>/dev/null || true
+      cp -rf ${SERVICE}/db/permissions/* $ROOTFS/etc/palm/db/permissions/ 2>/dev/null || true
+      cp -rf ${SERVICE}/files/sysbus/*.json $ROOTFS/usr/share/ls2/roles/prv 2>/dev/null || true
+      #NOTE: services go in $ROOTFS/usr/share/ls2/system-services, which is linked from /usr/share/ls2/system-services
+      cp -rf ${SERVICE}/desktop-support/*.service $ROOTFS/usr/share/ls2/system-services 2>/dev/null || true
+      cp -rf ${SERVICE}/tempdb/kinds/* $ROOTFS/etc/palm/db/kinds/ 2>/dev/null || true
+      cp -rf ${SERVICE}/tempdb/permissions/* $ROOTFS/etc/palm/db/permissions/ 2>/dev/null || true
+    done
+
+    # accounts service is public, so install its service file in public service dir
+    cp -rf com.palm.service.accounts/desktop-support/*.service $ROOTFS/usr/share/ls2/services
+
+    # install accounts service desktop credentials db kind
+    cp -rf com.palm.service.accounts/desktop/com.palm.account.credentials $ROOTFS/etc/palm/db/kinds
+
+    # install account-templates service
+    mkdir -p $ROOTFS/usr/palm/public/accounts
+    cp -rf account-templates/palmprofile/com.palm.palmprofile $ROOTFS/usr/palm/public/accounts/
 }
 
 ###########################################
@@ -561,17 +607,36 @@ function build_app-services
 ###########################################
 function build_mojomail
 {
-    #TODO: mojomail should probably be its own repo...
+    #TODO: mojomail should live in its own repo instead of app-services...
     do_fetch openwebos/app-services $1 mojomail
+    rm -rf $BASE/mojomail/com.palm.service.* $BASE/mojomail/account-templates
     cd $BASE/mojomail/mojomail
-    for SUBDIR in `ls -1` ; do
+    for SUBDIR in common imap pop smtp ; do
       mkdir -p $BASE/mojomail/mojomail/$SUBDIR/build
       cd $BASE/mojomail/mojomail/$SUBDIR/build
       sed -i 's!DESTINATION /!DESTINATION !' ../CMakeLists.txt
       $CMAKE -D WEBOS_INSTALL_ROOT:PATH=${LUNA_STAGING} -DCMAKE_INSTALL_PREFIX=${LUNA_STAGING} ..
+      #make $JOBS VERBOSE=1
       make $JOBS
-      make install
+      mkdir -p $ROOTFS/usr/palm/public/accounts
+      cp -rf ../files/usr/palm/public/accounts/* $ROOTFS/usr/palm/public/accounts/ 2>/dev/null || true
     done
+
+    # TODO: (cmake should do this) install filecache types
+    mkdir -p $ROOTFS/etc/palm/filecache_types
+    cp -rf $BASE/mojomail/mojomail/common/files/etc/palm/filecache_types/* $ROOTFS/etc/palm/filecache_types
+
+    # NOTE: Make binaries findable in /usr/lib/luna so ls2 can match the role file
+    cd $BASE/mojomail/mojomail
+    cp imap/build/mojomail-imap "${ROOTFS}/usr/lib/luna/"
+    cp pop/build/mojomail-pop "${ROOTFS}/usr/lib/luna/"
+    cp smtp/build/mojomail-smtp "${ROOTFS}/usr/lib/luna/"
+    cp -f desktop-support/com.palm.imap.json.prv $ROOTFS/usr/share/ls2/roles/prv/com.palm.imap.json
+    cp -f desktop-support/com.palm.pop.json.prv $ROOTFS/usr/share/ls2/roles/prv/com.palm.pop.json
+    cp -f desktop-support/com.palm.smtp.json.prv $ROOTFS/usr/share/ls2/roles/prv/com.palm.smtp.json
+    cp -f desktop-support/com.palm.imap.service.prv $ROOTFS/usr/share/ls2/system-services/com.palm.imap.service
+    cp -f desktop-support/com.palm.pop.service.prv $ROOTFS/usr/share/ls2/system-services/com.palm.pop.service
+    cp -f desktop-support/com.palm.smtp.service.prv $ROOTFS/usr/share/ls2/system-services/com.palm.smtp.service
 }
 
 ##############################
@@ -598,29 +663,30 @@ function build_luna-sysmgr
     mkdir -p $LUNA_STAGING/lib/sysmgr-images
     cp -frad images/* $LUNA_STAGING/lib/sysmgr-images
     #cp -f debug-x86/LunaSysMgr $LUNA_STAGING/lib
-    cp -f debug-x86/LunaSysMgr $LUNA_STAGING/bin
+    #cp -f debug-x86/LunaSysMgr $LUNA_STAGING/bin
 
     # TODO: Why are we linking LunaSysMgr to usr/lib/luna?
     # Does it refer to paths relative to the binary location?
     # Even if so, it should instead go in usr/bin/ not usr/lib/
-    # Ah, ls2/roles/prv/com.palm.luna.json mentions /usr/lib/luna/LunaSysMgr...
+    # Ah, ls2/roles/prv/com.palm.luna.json refers to /usr/lib/luna/LunaSysMgr and ls2 uses that path to match role files.
     mkdir -p $ROOTFS/usr/lib/luna
-    cp -fs $LUNA_STAGING/bin/LunaSysMgr $ROOTFS/usr/lib/luna/LunaSysMgr
+    cp -f debug-x86/LunaSysMgr $ROOTFS/usr/lib/luna/LunaSysMgr
 
     #TODO: (temporary) remove old luna-sysmgr user scripts from $BASE
     rm -f $BASE/service-bus.sh
     rm -f $BASE/run-luna-sysmgr.sh
     rm -f $BASE/install-luna-sysmgr.sh
 
-    cp -f desktop-support/ls*.conf $ROOTFS/etc/ls2
+    #TODO: these should come from luna-service (not from build-desktop/service-bus.sh)
+    #cp -f desktop-support/ls*.conf $ROOTFS/etc/ls2
 
     mkdir -p $ROOTFS/usr/lib/luna/system/luna-applauncher
     cp -f desktop-support/appinfo.json $ROOTFS/usr/lib/luna/system/luna-applauncher/appinfo.json
 
-    cp -f desktop-support/com.palm.luna.json.prv $ROOTFS/ls2/roles/prv/com.palm.luna.json
-    cp -f desktop-support/com.palm.luna.json.pub $ROOTFS/ls2/roles/pub/com.palm.luna.json
-    cp -f desktop-support/com.palm.luna.service.prv $ROOTFS/share/dbus-1/system-services/com.palm.luna.service
-    cp -f desktop-support/com.palm.luna.service.pub $ROOTFS/share/dbus-1/services/com.palm.luna.service
+    cp -f desktop-support/com.palm.luna.json.prv $ROOTFS/usr/share/ls2/roles/prv/com.palm.luna.json
+    cp -f desktop-support/com.palm.luna.json.pub $ROOTFS/usr/share/ls2/roles/pub/com.palm.luna.json
+    cp -f desktop-support/com.palm.luna.service.prv $ROOTFS/usr/share/ls2/system-services/com.palm.luna.service
+    cp -f desktop-support/com.palm.luna.service.pub $ROOTFS/usr/share/ls2/services/com.palm.luna.service
 
     mkdir -p $ROOTFS/etc/palm/pubsub_handlers
     cp -f service/com.palm.appinstaller.pubsub $ROOTFS/etc/palm/pubsub_handlers/com.palm.appinstaller
@@ -767,6 +833,10 @@ function build_nodejs
     $CMAKE .. -DNO_TESTS=True -DNO_UTILS=True -DCMAKE_INSTALL_PREFIX=${LUNA_STAGING} -DCMAKE_BUILD_TYPE=Release
     make $JOBS
     make install
+    # NOTE: Make binary findable in /usr/palm/nodejs so ls2 can match the role file
+    # role file is com.palm.nodejs.json (from nodejs-module-webos-sysbus)
+    # run-js-service (from mojoservicelauncher) calls /usr/palm/nodejs/node (not /usr/lib/luna/node)
+    cp default/node "${ROOTFS}/usr/palm/nodejs/node"
 }
 
 #################################
@@ -777,14 +847,18 @@ function build_node-addon
     do_fetch "openwebos/nodejs-module-webos-${1}" $2 nodejs-module-webos-${1} submissions/
     mkdir -p $BASE/nodejs-module-webos-${1}/build
     cd $BASE/nodejs-module-webos-${1}/build
-    #TODO: remove patch when dynaload is updated
-    if [ "$1" = "dynaload" ] ; then
-        sed -i 's/file_string()/string()/g' ../src/node_webos.cpp
-    fi
     $CMAKE -D WEBOS_INSTALL_ROOT:PATH=${LUNA_STAGING} -DCMAKE_INSTALL_PREFIX=${LUNA_STAGING} ..
     make $JOBS VERBOSE=1
     #make $JOBS
     make install
+    # NOTE: Install built node module to /usr/lib/nodejs. Names have changed; may need to be fixed.
+    cp -f webos-${1}.node $ROOTFS/usr/palm/nodejs/
+    if [ "${1}" = "sysbus" ] ; then
+      cp -f ../desktop-support/com.palm.nodejs.json.pub $ROOTFS/usr/share/ls2/roles/pub/com.palm.nodejs.json
+      cp -f ../desktop-support/com.palm.nodejs.json.prv $ROOTFS/usr/share/ls2/roles/prv/com.palm.nodejs.json
+    fi
+    # copy old node module names (as symlinks) from staging to ROOTFS
+    cp -fd ${LUNA_STAGING}/usr/lib/nodejs/*.node $ROOTFS/usr/palm/nodejs
 }
 
 #####################
@@ -795,6 +869,15 @@ function build_db8
     do_fetch openwebos/db8 $1 db8 submissions/
     cd $BASE/db8
     make $JOBS -e PREFIX=$LUNA_STAGING -f Makefile.Ubuntu install BUILD_TYPE=release
+    # NOTE: Make binary findable in /usr/lib/luna so ls2 can match the role file
+    cp release-linux-x86/mojodb-luna "${ROOTFS}/usr/lib/luna/"
+    # TODO: remove after switching to cmake
+    cp -f desktop-support/com.palm.db.json.pub $ROOTFS/usr/share/ls2/roles/pub/com.palm.db.json
+    cp -f desktop-support/com.palm.db.json.prv $ROOTFS/usr/share/ls2/roles/prv/com.palm.db.json
+    cp -f desktop-support/com.palm.db.service $ROOTFS/usr/share/ls2/services/com.palm.db.service
+    cp -f desktop-support/com.palm.db.service $ROOTFS/usr/share/ls2/system-services/com.palm.db.service
+    cp -f desktop-support/com.palm.tempdb.service $ROOTFS/usr/share/ls2/system-services/com.palm.tempdb.service
+    cp -f src/db-luna/mojodb.conf $ROOTFS/etc/palm/mojodb.conf
 }
 
 ##############################
@@ -805,8 +888,10 @@ function build_configurator
     do_fetch openwebos/configurator $1 configurator
     cd $BASE/configurator
     ARCH_LDFLAGS="-Wl,-rpath-link $LUNA_STAGING/lib" make $JOBS -f Makefile.Ubuntu
-    # install configurator binary
-    cp debug-linux-x86/configurator $LUNA_STAGING/bin/
+    # NOTE: Make binary findable in /usr/lib/luna so ls2 can match the role file
+    cp debug-linux-x86/configurator "${ROOTFS}/usr/lib/luna/"
+    cp -f desktop-support/com.palm.configurator.json.prv $ROOTFS/usr/share/ls2/roles/prv/com.palm.configurator.json
+    cp -f desktop-support/com.palm.configurator.service.prv $ROOTFS/usr/share/ls2/system-services/com.palm.configurator.service
 }
 
 #################################
@@ -822,6 +907,12 @@ function build_activitymanager
     $CMAKE -D WEBOS_INSTALL_ROOT:PATH=${LUNA_STAGING} -DCMAKE_INSTALL_PREFIX=${LUNA_STAGING} ..
     make $JOBS
     make install
+    # NOTE: Make binary findable in /usr/lib/luna so ls2 can match the role file
+    cp activitymanager "${ROOTFS}/usr/lib/luna/"
+    cp -f ../desktop-support/com.palm.activitymanager.json.pub $ROOTFS/usr/share/ls2/roles/pub/com.palm.activitymanager.json
+    cp -f ../desktop-support/com.palm.activitymanager.json.prv $ROOTFS/usr/share/ls2/roles/prv/com.palm.activitymanager.json
+    cp -f ../desktop-support/com.palm.activitymanager.service.pub $ROOTFS/usr/share/ls2/services/com.palm.activitymanager.service
+    cp -f ../desktop-support/com.palm.activitymanager.service.prv $ROOTFS/usr/share/ls2/system-services/com.palm.activitymanager.service
 }
 
 #######################################
@@ -855,6 +946,13 @@ function build_libpalmsocket
 #############################
 function build_libsandbox
 {
+    # TODO: Remove this workaround to fetch a not-yet-public zipball when github won't give it to us from the usual spot
+    # That is, when tagged zipballs work from https://github.com/openwebos/libsandbox/tags, we will no longer need this:
+    GIT_SOURCE=https://${GITHUB_USER}:${GITHUB_PASS}@github.com/downloads/openwebos/build-desktop/libsandbox_${1}.zip
+    ZIPFILE="${BASE}/tarballs/libsandbox_${1}.zip"
+    echo "About to fetch libsandbox zipball from build-desktop..."
+    curl -L -R -# ${GIT_SOURCE} -o "${ZIPFILE}"
+
     do_fetch openwebos/libsandbox $1 libsandbox submissions/
     mkdir -p $BASE/libsandbox/build
     cd $BASE/libsandbox/build
@@ -887,6 +985,12 @@ function build_filecache
     $CMAKE -D WEBOS_INSTALL_ROOT:PATH=${LUNA_STAGING} -DCMAKE_INSTALL_PREFIX=${LUNA_STAGING} ..
     make $JOBS
     make install
+    cp filecache "${ROOTFS}/usr/lib/luna/"
+    cp -f ../desktop-support/com.palm.filecache.json.pub $ROOTFS/usr/share/ls2/roles/pub/com.palm.filecache.json
+    cp -f ../desktop-support/com.palm.filecache.json.prv $ROOTFS/usr/share/ls2/roles/prv/com.palm.filecache.json
+    cp -f ../desktop-support/com.palm.filecache.service.pub $ROOTFS/usr/share/ls2/services/com.palm.filecache.service
+    cp -f ../desktop-support/com.palm.filecache.service.prv $ROOTFS/usr/share/ls2/system-services/com.palm.filecache.service
+    cp -f ../files/conf/FileCache.conf $ROOTFS/etc/palm/
 }
 
 ###############
@@ -942,14 +1046,35 @@ mkdir -p ${ROOTFS}/etc/palm
 mkdir -p ${ROOTFS}/etc/palm/db_kinds
 mkdir -p ${ROOTFS}/etc/palm/db/kinds
 mkdir -p ${ROOTFS}/etc/palm/db/permissions
-mkdir -p ${ROOTFS}/ls2/roles/prv
-mkdir -p ${ROOTFS}/ls2/roles/pub
-mkdir -p ${ROOTFS}/share/dbus-1/system-services
-mkdir -p ${ROOTFS}/share/dbus-1/services
+# NOTE: desktop ls2 .conf files will look for services in /usr/share/ls2/*services
+# NOTE: but on device they live in /usr/share/dbus-1/*services (which is used by Ubuntu dbus)
+# NOTE: To avoid problems, we'll symlink from the dbus-1 path in $ROOTFS, but our install
+# NOTE: script only links from /usr/share/ls2, which is where our ls2 conf files need to look.
+#mkdir -p ${ROOTFS}/share/dbus-1/system-services
+#mkdir -p ${ROOTFS}/share/dbus-1/services
+mkdir -p ${ROOTFS}/usr/share/dbus-1
+ln -sf -T ${ROOTFS}/usr/share/ls2/system-services ${ROOTFS}/usr/share/dbus-1/system-services
+ln -sf -T ${ROOTFS}/usr/share/ls2/services ${ROOTFS}/usr/share/dbus-1/services
+
+# NOTE: desktop ls2 .conf files will look for roles in /usr/share/ls2/roles (which is linked to $ROOTFS)
+mkdir -p ${ROOTFS}/usr/share/ls2/roles/prv
+mkdir -p ${ROOTFS}/usr/share/ls2/roles/pub
+mkdir -p ${ROOTFS}/usr/share/ls2/system-services
+mkdir -p ${ROOTFS}/usr/share/ls2/services
+
+# binaries go in /usr/lib/luna so service and role files will match
+# yes, it should have been called /usr/bin/luna
+mkdir -p ${ROOTFS}/usr/lib/luna
+# run-js-service needs to export LD_LIBRARY_PATH for nodejs; it shall export /usr/lib/luna/lib
+ln -sf -T ${LUNA_STAGING}/lib ${ROOTFS}/usr/lib/luna/lib
 mkdir -p ${ROOTFS}/usr/lib/luna/system/luna-systemui
+mkdir -p ${ROOTFS}/usr/palm/nodejs
 mkdir -p ${ROOTFS}/usr/palm/public/accounts
 mkdir -p ${ROOTFS}/usr/palm/services
 mkdir -p ${ROOTFS}/usr/palm/smartkey
+mkdir -p ${LUNA_STAGING}/var/file-cache
+mkdir -p ${ROOTFS}/var/db
+mkdir -p ${ROOTFS}/var/file-cache
 mkdir -p ${ROOTFS}/var/luna
 mkdir -p ${ROOTFS}/var/palm
 mkdir -p ${ROOTFS}/var/usr/palm
@@ -980,7 +1105,7 @@ build luna-sysmgr-ipc-messages 0.90
 build luna-sysmgr $LSM_TAG
 
 build luna-prefs 0.91
-build luna-sysservice 0.91
+build luna-sysservice 0.92
 
 build enyo-1.0 128.2
 #TODO: need new tag for core-apps
@@ -990,14 +1115,11 @@ build foundation-frameworks 1.0
 build mojoservice-frameworks 1.0
 #TODO: need tag for loadable-frameworks:
 build loadable-frameworks master
-#TODO: need new tag for app-services
-build app-services master
-
-build mojomail master
+build app-services 1.02
 
 build underscore 8
 build mojoloader master
-build mojoservicelauncher 67
+build mojoservicelauncher 70
 
 build WebKitSupplemental 0.4
 build AdapterBase 0.2
@@ -1005,22 +1127,25 @@ build BrowserServer 0.4
 build BrowserAdapter 0.3
 
 build nodejs 33
-build node-addon sysbus 23
+build node-addon sysbus 25
 build node-addon pmlog 10
-build node-addon dynaload 9
+build node-addon dynaload 10
 
-build db8 54.15
-#TODO: need new tag for app-services
-build configurator master
+#build db8 54.15
+build db8 55
+build configurator 1.01
 
 #NOTE: The following components need cmake 2.8.7 or newer, and webos cmake module:
-build activitymanager 107
+build activitymanager 108
 build pmstatemachineengine 13
 build libpalmsocket 30
 build libsandbox 15
 
+#NOTE: mojomail depends on libsandbox, libpalmsocket, and pmstatemachine; and lives in app-services repo
+build mojomail 1.01
+
 build jemalloc 11
-build filecache 53
+build filecache 54
 
 echo ""
 echo "Complete. "

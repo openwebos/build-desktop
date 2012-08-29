@@ -45,7 +45,7 @@ a) Prerequisites
 b) Getting the code
 -------------------
 
-Get the build-desktop zip file and unzip it into a known directory.
+Get the build-desktop zip file and unzip it into a known directory or better yet, "git clone" the repository.
   
 c) Building Open webOS
 ----------------------
@@ -63,6 +63,8 @@ d) Installing Open webOS
 
         sudo ./install-luna-sysmgr.sh
 
+2) Note that you can run "sudo ./install-luna-sysmgr.sh remove" to remove the system folders and symlinks.
+
 How to Run on Linux
 ===================
 
@@ -72,9 +74,17 @@ Please note that this version of the build provides minimal runtime functionalit
 
 2) Start up the service bus:
 
-        ./service-bus.sh  start
+        ./service-bus.sh start
 
-3) Run luna-sysmgr   (ignore the messages from LunaService):
+3) Start up the native webOS services on the service bus:
+
+        ./service-bus.sh services
+
+4) The first time you start, you'll need to create a default account: 
+
+        ./service-bus.sh init
+
+5) Run luna-sysmgr   (ignore the messages from LunaService):
 
         ./run-luna-sysmgr.sh
 
@@ -87,6 +97,7 @@ When you are finished running luna-sysmgr, stop the service bus:
 
   * Error messages are generated in the LunaService log file, which can be ignored.
   * Since the components supporting "Just Type" have not yet been released, attempting to enter text in the "Just Type" field will not work as expected.
+  * The email application may work properly.
 
 # Copyright and License Information
 
