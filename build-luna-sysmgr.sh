@@ -196,8 +196,7 @@ function build_cjson
 ##########################
 function build_pbnjson
 {
-    ##do_fetch openwebos/pbnjson $1 pbnjson submissions/
-    do_fetch isis-project/pbnjson $1 pbnjson
+    do_fetch openwebos/libpbnjson $1 pbnjson submissions/
     mkdir -p $BASE/pbnjson/build
     cd $BASE/pbnjson/build
     sed -i 's/set(EXTERNAL_YAJL TRUE)/set(EXTERNAL_YAJL FALSE)/' ../src/CMakeLists.txt
@@ -1093,7 +1092,7 @@ build cmake
 build cmake-modules-webos 9
 
 build cjson 35
-build pbnjson 0.2
+build pbnjson 2
 build pmloglib 21
 build nyx-lib 58
 build luna-service2 140
