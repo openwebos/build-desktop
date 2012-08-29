@@ -1155,7 +1155,7 @@ build AdapterBase 0.2
 build BrowserServer 0.4
 build BrowserAdapter 0.3
 
-build nodejs 33
+build nodejs 34
 build node-addon sysbus 25
 build node-addon pmlog 10
 build node-addon dynaload 11
