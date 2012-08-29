@@ -54,18 +54,20 @@ c) Building Open webOS
  
 Change to the folder where you downloaded the build-desktop scripts and run the build script:
 
-        ./build-luna-sysmgr.sh
+        ./build-webos-desktop.sh
 
-Note: This will typically take one to three hours, depending on the speed of your system and of your internet connection.
+Note: This will typically take one to three hours, depending on the speed of your system and of your internet connection. The build will go much faster on a multi-core machine.
 
 d) Installing Open webOS
 ------------------------
 
-1) Change to the folder where the build-desktop scripts are located (if necessary) and run the "install" script to create expected folders and symlinks into various system directories:
+Change to the folder where the build-desktop scripts are located (if necessary) and run the "install" script to create expected folders and symlinks into various system directories:
 
-        sudo ./install-luna-sysmgr.sh
+        sudo ./install-webos-desktop.sh
 
-2) Note that you can run "sudo ./install-luna-sysmgr.sh remove" to remove the system folders and symlinks.
+In general, you should only have to run the install script once (unless you update to a newer version).
+
+You can run "sudo ./install-webos-desktop.sh remove" to remove the system folders and symlinks.
 
 How to Run on Linux
 ===================
