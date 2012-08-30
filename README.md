@@ -11,7 +11,7 @@ How to Build on Linux
 
 Note:  The build script has been successfully tested on both Ubuntu _Desktop_ 11.04 and 12.04 in 32-bit mode.
 
-Note:  Ubuntu Server (or other non-desktop) installations are not currently working.
+Note:  Builds on Ubuntu Server (or other non-desktop) installations are not currently supported (or working).
 
 Note:  Builds on 64-bit machines are not currently supported (or working).
 
