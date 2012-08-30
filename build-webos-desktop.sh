@@ -45,7 +45,7 @@ else
 fi
 
 
-export BASE="${HOME}/luna-desktop-binaries"
+export BASE="${HOME}/webos-desktop-binaries"
 export ROOTFS="${BASE}/rootfs"
 export LUNA_STAGING="${BASE}/staging"
 mkdir -p ${BASE}/tarballs

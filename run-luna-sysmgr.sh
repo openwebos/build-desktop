@@ -19,7 +19,7 @@
 
 set -x
 
-BASE="${HOME}/luna-desktop-binaries"
+BASE="${HOME}/webos-desktop-binaries"
 ROOTFS="${BASE}/rootfs"
 LUNA_STAGING="${BASE}/staging"
 

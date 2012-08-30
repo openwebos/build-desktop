@@ -25,7 +25,7 @@
 
 set -x
 
-export BASE="${HOME}/luna-desktop-binaries"
+export BASE="${HOME}/webos-desktop-binaries"
 export ROOTFS="${BASE}/rootfs"
 
 if [ "$1" = "--help" ] ; then
