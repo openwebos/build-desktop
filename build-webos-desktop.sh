@@ -607,8 +607,6 @@ function build_app-services
       cp -rf ${SERVICE}/files/sysbus/*.json $ROOTFS/usr/share/ls2/roles/prv 2>/dev/null || true
       #NOTE: services go in $ROOTFS/usr/share/ls2/system-services, which is linked from /usr/share/ls2/system-services
       cp -rf ${SERVICE}/desktop-support/*.service $ROOTFS/usr/share/ls2/system-services 2>/dev/null || true
-      cp -rf ${SERVICE}/tempdb/kinds/* $ROOTFS/etc/palm/db/kinds/ 2>/dev/null || true
-      cp -rf ${SERVICE}/tempdb/permissions/* $ROOTFS/etc/palm/db/permissions/ 2>/dev/null || true
     done
 
     # accounts service is public, so install its service file in public service dir
@@ -620,6 +618,12 @@ function build_app-services
     # install account-templates service
     mkdir -p $ROOTFS/usr/palm/public/accounts
     cp -rf account-templates/palmprofile/com.palm.palmprofile $ROOTFS/usr/palm/public/accounts/
+
+    # install tempdb kinds and permissions
+    mkdir -p $ROOTFS/etc/palm/tempdb/kinds
+    mkdir -p $ROOTFS/etc/palm/tempdb/permissions
+    cp -rf com.palm.service.accounts/tempdb/kinds/* $ROOTFS/etc/palm/tempdb/kinds/ 2>/dev/null || true
+    cp -rf com.palm.service.accounts/tempdb/permissions/* $ROOTFS/etc/palm/tempdb/permissions/ 2>/dev/null || true
 }
 
 ###########################################
@@ -638,8 +642,10 @@ function build_mojomail
       $CMAKE -D WEBOS_INSTALL_ROOT:PATH=${LUNA_STAGING} -DCMAKE_INSTALL_PREFIX=${LUNA_STAGING} ..
       #make $JOBS VERBOSE=1
       make $JOBS
+      make install
       mkdir -p $ROOTFS/usr/palm/public/accounts
       cp -rf ../files/usr/palm/public/accounts/* $ROOTFS/usr/palm/public/accounts/ 2>/dev/null || true
+      cp -rf ../files/db8/kinds/* $ROOTFS/etc/palm/db/kinds 2> /dev/null || true
     done
 
     # TODO: (cmake should do this) install filecache types
@@ -1173,7 +1179,7 @@ build filecache 54
 
 #NOTE: mojomail depends on libsandbox, libpalmsocket, and pmstatemachine; and lives in app-services repo
 #TODO: fix mojomail; it needs mojodb.pc (missing) and has a few other build issues
-#build mojomail 1.01
+build mojomail 1.03
 
 echo ""
 echo "Complete. "
