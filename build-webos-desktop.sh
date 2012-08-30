@@ -692,10 +692,7 @@ function build_luna-sysmgr
     #cp -f debug-x86/LunaSysMgr $LUNA_STAGING/lib
     #cp -f debug-x86/LunaSysMgr $LUNA_STAGING/bin
 
-    # TODO: Why are we linking LunaSysMgr to usr/lib/luna?
-    # Does it refer to paths relative to the binary location?
-    # Even if so, it should instead go in usr/bin/ not usr/lib/
-    # Ah, ls2/roles/prv/com.palm.luna.json refers to /usr/lib/luna/LunaSysMgr and ls2 uses that path to match role files.
+    # Note: ls2/roles/prv/com.palm.luna.json refers to /usr/lib/luna/LunaSysMgr and ls2 uses that path to match role files.
     mkdir -p $ROOTFS/usr/lib/luna
     cp -f debug-x86/LunaSysMgr $ROOTFS/usr/lib/luna/LunaSysMgr
 
@@ -703,9 +700,6 @@ function build_luna-sysmgr
     rm -f $BASE/service-bus.sh
     rm -f $BASE/run-luna-sysmgr.sh
     rm -f $BASE/install-luna-sysmgr.sh
-
-    #TODO: these should come from luna-service (not from build-desktop/service-bus.sh)
-    #cp -f desktop-support/ls*.conf $ROOTFS/etc/ls2
 
     mkdir -p $ROOTFS/usr/lib/luna/system/luna-applauncher
     cp -f desktop-support/appinfo.json $ROOTFS/usr/lib/luna/system/luna-applauncher/appinfo.json
@@ -1076,7 +1070,6 @@ mkdir -p $LUNA_STAGING/include
 
 mkdir -p ${ROOTFS}/etc/ls2
 mkdir -p ${ROOTFS}/etc/palm
-#TODO: Fix whatever is installing to etc/palm/db-kinds
 mkdir -p ${ROOTFS}/etc/palm/db_kinds
 mkdir -p ${ROOTFS}/etc/palm/db/kinds
 mkdir -p ${ROOTFS}/etc/palm/db/permissions
@@ -1143,17 +1136,15 @@ build luna-prefs 0.91
 build luna-sysservice 0.92
 
 build enyo-1.0 128.2
-#TODO: need new tag for core-apps
-build core-apps master
+build core-apps 1.0.2
 
 build foundation-frameworks 1.0
 build mojoservice-frameworks 1.0
-#TODO: need tag for loadable-frameworks:
-build loadable-frameworks master
+build loadable-frameworks 1.0.1
 build app-services 1.02
 
 build underscore 8
-build mojoloader master
+build mojoloader 4
 build mojoservicelauncher 70
 
 build WebKitSupplemental 0.4
@@ -1166,7 +1157,6 @@ build node-addon sysbus 25
 build node-addon pmlog 10
 build node-addon dynaload 11
 
-#build db8 54.15
 build db8 55
 build configurator 1.01
 
@@ -1178,7 +1168,6 @@ build jemalloc 11
 build filecache 54
 
 #NOTE: mojomail depends on libsandbox, libpalmsocket, and pmstatemachine; and lives in app-services repo
-#TODO: fix mojomail; it needs mojodb.pc (missing) and has a few other build issues
 build mojomail 1.03
 
 echo ""
