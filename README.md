@@ -82,13 +82,13 @@ Please note that this version of the build provides minimal runtime functionalit
 
         ./service-bus.sh start  
 
-    The message __hub daemons started__ indicates success.  You can safely ignore error messages.  
+  * The message __hub daemons started__ indicates success.  You can safely ignore error messages.  
 
 3) Start up the native webOS services on the service bus:
 
         ./service-bus.sh services  
 
-    The message __Services started!__ indicates success.  You can safely ignore error messages.  
+  * The message __Services started!__ indicates success.  You can safely ignore error messages.  
 
 4) The first time you start, you'll need to create a default account: 
 
@@ -98,7 +98,7 @@ Please note that this version of the build provides minimal runtime functionalit
 
         ./run-luna-sysmgr.sh
 
-    You can safely ignore the messages from LunaService.
+  * You can safely ignore the messages from LunaService.
 
 6) When you are finished running luna-sysmgr, stop the service bus:
 
