@@ -9,7 +9,7 @@ This is the current active development repository for the desktop build scripts 
 How to Build on Linux
 =====================
 
-Note:  The build script has been successfully tested on both Ubuntu 11.04 and 12.04 in 32-bit mode.
+Note:  The build script has been successfully tested on both Ubuntu 11.04 and 12.04 in 32-bit mode.  
 
 Note:  Builds on 64-bit machines are not currently supported (or working).
 
@@ -78,11 +78,13 @@ Please note that this version of the build provides minimal runtime functionalit
 
 2) Start up the service bus:
 
-        ./service-bus.sh start
+        ./service-bus.sh start  
+    The message __hub daemons started__ indicates success.  You can safely ignore error messages.  
 
 3) Start up the native webOS services on the service bus:
 
-        ./service-bus.sh services
+        ./service-bus.sh services  
+    The message __Services started!__ indicates success.  You can safely ignore error messages.  
 
 4) The first time you start, you'll need to create a default account: 
 
@@ -95,7 +97,7 @@ Please note that this version of the build provides minimal runtime functionalit
 
 When you are finished running luna-sysmgr, stop the service bus:
 
-       ./service-bus.sh  stop
+       ./service-bus.sh stop
 
 # Known Issues
 
