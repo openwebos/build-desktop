@@ -1108,7 +1108,7 @@ mkdir -p ${ROOTFS}/var/palm
 mkdir -p ${ROOTFS}/var/usr/palm
 set -x
 
-export LSM_TAG="0.824"
+export LSM_TAG="0.900"
 if [ ! -d "$BASE/luna-sysmgr" ] || [ ! -d "$BASE/tarballs" ] || [ ! -e "$BASE/tarballs/luna-sysmgr_${LSM_TAG}.zip" ] ; then
     do_fetch openwebos/luna-sysmgr ${LSM_TAG} luna-sysmgr
 fi
