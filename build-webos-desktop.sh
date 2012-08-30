@@ -1116,7 +1116,7 @@ fi
 #    rm -f $BASE/luna-sysmgr/luna-desktop-build.stamp
 #fi
 
-# fetch cmake 2.8.8 and install it with the webos module
+# Build a local version of cmake 2.8.7 so that cmake-modules-webos doesn't have to write to the OS-supplied CMake modules directory
 build cmake
 build cmake-modules-webos 9
 
@@ -1164,7 +1164,6 @@ build node-addon dynaload 11
 build db8 55
 build configurator 1.01
 
-#NOTE: The following components need cmake 2.8.7 or newer, and webos cmake module:
 build activitymanager 108
 build pmstatemachineengine 13
 build libpalmsocket 30
