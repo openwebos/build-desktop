@@ -456,6 +456,9 @@ function build_luna-sysservice
     #cp debug-x86/LunaSysService $LUNA_STAGING/bin
     # NOTE: Make binary findable in /usr/lib/luna so ls2 can match the role file
     cp -f debug-x86/LunaSysService $ROOTFS/usr/lib/luna/
+    # ls-control is used by serviceinstaller
+    chmod ugo+x ../desktop-support/ls-control
+    cp -f ../desktop-support/ls-control $ROOTFS/usr/lib/luna/
 
     # TODO: cmake should do this for us (after we switch)
     cp -rf files/conf/* ${ROOTFS}/etc/palm
@@ -499,6 +502,32 @@ function build_core-apps
       cp -rf ${APP}/configuration/db/kinds/* $ROOTFS/etc/palm/db/kinds/ 2>/dev/null || true
       cp -rf ${APP}/configuration/db/permissions/* $ROOTFS/etc/palm/db/permissions/ 2>/dev/null || true
     done
+}
+
+###########################################
+#  Fetch and build luna-applauncher
+###########################################
+function build_luna-applauncher
+{
+    do_fetch openwebos/luna-applauncher $1 luna-applauncher
+
+    ##### To build from your local clone of luna-applauncher, change the following line to "cd" to your clone's location
+    cd $BASE/luna-applauncher
+    mkdir -p $ROOTFS/usr/lib/luna/system/luna-applauncher
+    cp -rf . $ROOTFS/usr/lib/luna/system/luna-applauncher
+}
+
+###########################################
+#  Fetch and build luna-systemui
+###########################################
+function build_luna-systemui
+{
+    do_fetch openwebos/luna-systemui $1 luna-systemui
+
+    ##### To build from your local clone of luna-systemui, change the following line to "cd" to your clone's location
+    cd $BASE/luna-systemui
+    mkdir -p $ROOTFS/usr/lib/luna/system/luna-systemui
+    cp -rf . $ROOTFS/usr/lib/luna/system/luna-systemui
 }
 
 ###########################################
@@ -1002,6 +1031,63 @@ function build_jemalloc
     make install
 }
 
+###########################
+#  Fetch and build librolegen
+###########################
+function build_librolegen
+{
+    do_fetch openwebos/librolegen $1 librolegen submissions/
+    
+    ##### To build from your local clone of librolegen, change the following line to "cd" to your clone's location
+    cd $BASE/librolegen
+    mkdir -p build
+    cd build
+    $CMAKE -D WEBOS_INSTALL_ROOT:PATH=${LUNA_STAGING} -DCMAKE_INSTALL_PREFIX=${LUNA_STAGING} ..
+    make $JOBS
+    make install
+}
+
+###########################
+#  Fetch and build serviceinstaller
+###########################
+function build_serviceinstaller
+{
+    do_fetch openwebos/serviceinstaller $1 serviceinstaller
+    
+    ##### To build from your local clone of serviceinstaller, change the following line to "cd" to your clone's location
+    cd $BASE/serviceinstaller
+    mkdir -p build
+    cd build
+    $CMAKE -D WEBOS_INSTALL_ROOT:PATH=${LUNA_STAGING} -DCMAKE_INSTALL_PREFIX=${LUNA_STAGING} ..
+    make $JOBS
+    make install
+}
+
+###########################
+#  Fetch and build luna-universalsearchmgr
+###########################
+function build_luna-universalsearchmgr
+{
+    do_fetch openwebos/luna-universalsearchmgr $1 luna-universalsearchmgr
+    
+    ##### To build from your local clone of luna-universalsearchmgr, change the following line to "cd" to your clone's location
+    cd $BASE/luna-universalsearchmgr
+    mkdir -p build
+    cd build
+    $CMAKE -D WEBOS_INSTALL_ROOT:PATH=${LUNA_STAGING} -DCMAKE_INSTALL_PREFIX=${LUNA_STAGING} ..
+    make $JOBS
+    make install
+    # NOTE: Make binary findable in /usr/lib/luna so luna-universalsearchmgr can match the role file
+    cp -f $LUNA_STAGING/usr/sbin/luna-universalsearchmgr "${ROOTFS}/usr/lib/luna/"
+    cp -f ../desktop-support/com.palm.universalsearch.json.pub $ROOTFS/usr/share/ls2/roles/pub/com.palm.universalsearch.json
+    cp -f ../desktop-support/com.palm.universalsearch.json.prv $ROOTFS/usr/share/ls2/roles/prv/com.palm.universalsearch.json
+    cp -f ../desktop-support/com.palm.universalsearch.service.pub $ROOTFS/usr/share/ls2/services/com.palm.universalsearch.service
+    cp -f ../desktop-support/com.palm.universalsearch.service.prv $ROOTFS/usr/share/ls2/system-services/com.palm.universalsearch.service
+    mkdir -p "${ROOTFS}/usr/palm/universalsearchmgr/resources/en_us"
+    cp -f ../desktop-support/UniversalSearchList.json "${ROOTFS}/usr/palm/universalsearchmgr/resources/en_us"
+    
+}
+
 ############################
 #  Fetch and build filecache
 ############################
@@ -1111,9 +1197,9 @@ export LSM_TAG="0.900"
 if [ ! -d "$BASE/luna-sysmgr" ] || [ ! -d "$BASE/tarballs" ] || [ ! -e "$BASE/tarballs/luna-sysmgr_${LSM_TAG}.zip" ] ; then
     do_fetch openwebos/luna-sysmgr ${LSM_TAG} luna-sysmgr
 fi
-#if [ -d $BASE/luna-sysmgr ] ; then
-#    rm -f $BASE/luna-sysmgr/luna-desktop-build.stamp
-#fi
+if [ -d $BASE/luna-sysmgr ] ; then
+    rm -f $BASE/luna-sysmgr/luna-desktop-build.stamp
+fi
 
 # Build a local version of cmake 2.8.7 so that cmake-modules-webos doesn't have to write to the OS-supplied CMake modules directory
 build cmake
@@ -1128,12 +1214,19 @@ build qt4 0.33
 build npapi-headers 0.4
 build luna-webkit-api 0.90
 build webkit 0.3
+
 build luna-sysmgr-ipc 0.90
 build luna-sysmgr-ipc-messages 0.90
 build luna-sysmgr $LSM_TAG
 
 build luna-prefs 0.91
 build luna-sysservice 0.92
+build librolegen 16
+##build serviceinstaller 0.90
+build luna-universalsearchmgr 0.91
+
+build luna-applauncher 0.90
+build luna-systemui 0.90
 
 build enyo-1.0 128.2
 build core-apps 1.0.2
