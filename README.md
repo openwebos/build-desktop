@@ -1,15 +1,15 @@
 build-desktop
 =============
 
-The scripts in this repository are used to build, install, and run Open webOS on an Ubuntu Linux desktop computer.
+The scripts in this repository are used to build, install, and run Open webOS on an Ubuntu desktop system.
  
 This is the current active development repository for the desktop build scripts for Open webOS.
 
 
-How to Build on Ubuntu Linux
+How to Build on Ubuntu
 ============================
 
-Note:  The build script has been successfully tested on both Ubuntu _Desktop_ 11.04 and 12.04 in 32-bit mode.
+Note:  The build script has been successfully tested on both Ubuntu _Desktop_ 11.04 and 12.04 LTS in 32-bit mode.
 
 Note:  Builds on Ubuntu Server (or other non-desktop) installations are not currently supported (or working).
 
@@ -71,7 +71,7 @@ In general, you should only have to run the install script once (unless you upda
 
 You can run "sudo ./install-webos-desktop.sh remove" to remove the system folders and symlinks.
 
-How to Run on Ubuntu Linux
+How to Run on Ubuntu
 ==========================
 
 Please note that this version of the build provides minimal runtime functionality.
