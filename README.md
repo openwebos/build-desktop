@@ -42,6 +42,10 @@ a) Prerequisites
 		libcurl4-openssl-dev
 
         sudo apt-get build-dep qt4-qmake
+        
+  * If you have a 64-bit system, don't forget to install 32-bit libraries to run cmake
+	
+        sudo apt-get install ia32-libs
 
   * cmake version 2.8.7 will be fetched and used for the build; there is no need to install it.
 
