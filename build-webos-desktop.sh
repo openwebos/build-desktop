@@ -817,6 +817,24 @@ function build_AdapterBase
     #make $JOBS -e PREFIX=$LUNA_STAGING -f Makefile.Ubuntu install BUILD_TYPE=release
 }
 
+###########################################
+#  Fetch and build isis-browser
+###########################################
+function build_isis-browser
+{
+    do_fetch isis-project/isis-browser $1 isis-browser
+
+    ##### To build from your local clone of isis-browser, change the following line to "cd" to your clone's location
+    cd $BASE/isis-browser
+    mkdir -p $ROOTFS/etc/palm/db/kinds
+    mkdir -p $ROOTFS/etc/palm/db/permissions
+    mkdir -p $ROOTFS/usr/palm/applications/com.palm.app.browser
+    cp -rf * $ROOTFS/usr/palm/applications/com.palm.app.browser/
+    rm -rf $ROOTFS/usr/palm/applications/com.palm.app.browser/db/*
+    cp -rf db/kinds/* $ROOTFS/etc/palm/db/kinds/ 2>/dev/null || true
+    cp -rf db/permissions/* $ROOTFS/etc/palm/db/permissions/ 2>/dev/null || true
+}
+
 ################################
 #  Fetch and build BrowserServer
 ################################
@@ -1230,6 +1248,7 @@ build luna-systemui 0.90
 
 build enyo-1.0 128.2
 build core-apps 1.0.2
+build isis-browser 0.2
 
 build foundation-frameworks 1.0
 build mojoservice-frameworks 1.0
