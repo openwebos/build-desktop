@@ -864,7 +864,7 @@ function build_BrowserServer
     make -e PREFIX=$LUNA_STAGING -f Makefile.Ubuntu stage BUILD_TYPE=release
     #make -f Makefile.Ubuntu stage BUILD_TYPE=release
 
-    #cp release-x86/BrowserServer $LUNA_STAGING/bin
+    #cp -f release-x86/BrowserServer $LUNA_STAGING/bin
 }
 
 #################################
@@ -890,8 +890,8 @@ function build_BrowserAdapter
 
     # TODO: Might need to install files (maybe more than just these) in BrowserAdapterData...
     #mkdir -p $LUNA_STAGING/lib/BrowserPlugins/BrowserAdapterData
-    #cp data/launcher-bookmark-alpha.png $LUNA_STAGING/lib/BrowserPlugins/BrowserAdapterData
-    #cp data/launcher-bookmark-overlay.png $LUNA_STAGING/lib/BrowserPlugins/BrowserAdapterData
+    #cp -f data/launcher-bookmark-alpha.png $LUNA_STAGING/lib/BrowserPlugins/BrowserAdapterData
+    #cp -f data/launcher-bookmark-overlay.png $LUNA_STAGING/lib/BrowserPlugins/BrowserAdapterData
 }
 
 #########################
@@ -908,7 +908,7 @@ function build_nodejs
     # NOTE: Make binary findable in /usr/palm/nodejs so ls2 can match the role file
     # role file is com.palm.nodejs.json (from nodejs-module-webos-sysbus)
     # run-js-service (from mojoservicelauncher) calls /usr/palm/nodejs/node (not /usr/lib/luna/node)
-    cp default/node "${ROOTFS}/usr/palm/nodejs/node"
+    cp -f default/node "${ROOTFS}/usr/palm/nodejs/node"
 }
 
 #################################
@@ -965,7 +965,7 @@ function build_configurator
     cd $BASE/configurator
     ARCH_LDFLAGS="-Wl,-rpath-link $LUNA_STAGING/lib" make $JOBS -f Makefile.Ubuntu
     # NOTE: Make binary findable in /usr/lib/luna so ls2 can match the role file
-    cp debug-linux-x86/configurator "${ROOTFS}/usr/lib/luna/"
+    cp -f debug-linux-x86/configurator "${ROOTFS}/usr/lib/luna/"
     cp -f desktop-support/com.palm.configurator.json.prv $ROOTFS/usr/share/ls2/roles/prv/com.palm.configurator.json
     cp -f desktop-support/com.palm.configurator.service.prv $ROOTFS/usr/share/ls2/system-services/com.palm.configurator.service
 }
