@@ -17,6 +17,8 @@
 #
 # LICENSE@@@
 
+export VERSION=7
+
 if [ "$1" = "clean" ] ; then
   export SKIPSTUFF=0
   set -e
@@ -33,7 +35,7 @@ elif [ "$1" = "--help" ] ; then
     echo " "
     exit
 elif [ "$1" = "--version" ] ; then
-    echo "Desktop build script for Open webOS #3"
+    echo "Desktop build script for Open webOS #${VERSION}"
     exit
 elif  [ -n "$1" ] ; then
     echo "Parameter $1 not recognized"
@@ -237,9 +239,7 @@ function build_nyx-lib
 ######################
 function build_qt4
 {
-    if [ ! -d $BASE/qt4 ] ; then
-      do_fetch openwebos/qt $1 qt4
-    fi
+    do_fetch openwebos/qt $1 qt4
     export STAGING_DIR=${LUNA_STAGING}
     if [ ! -f $BASE/qt-build-desktop/Makefile ] ; then
         rm -rf $BASE/qt-build-desktop
@@ -460,8 +460,8 @@ function build_luna-sysservice
     # NOTE: Make binary findable in /usr/lib/luna so ls2 can match the role file
     cp -f debug-x86/LunaSysService $ROOTFS/usr/lib/luna/
     # ls-control is used by serviceinstaller
-    chmod ugo+x ../desktop-support/ls-control
-    cp -f ../desktop-support/ls-control $ROOTFS/usr/lib/luna/
+    #chmod ugo+x ../desktop-support/ls-control
+    #cp -f ../desktop-support/ls-control $ROOTFS/usr/lib/luna/
 
     # TODO: cmake should do this for us (after we switch)
     cp -rf files/conf/* ${ROOTFS}/etc/palm
@@ -944,7 +944,7 @@ function build_db8
     cd $BASE/db8
     make $JOBS -e PREFIX=$LUNA_STAGING -f Makefile.Ubuntu install BUILD_TYPE=release
     # NOTE: Make binary findable in /usr/lib/luna so ls2 can match the role file
-    cp release-linux-x86/mojodb-luna "${ROOTFS}/usr/lib/luna/"
+    cp -f release-linux-x86/mojodb-luna "${ROOTFS}/usr/lib/luna/"
     # TODO: remove after switching to cmake
     cp -f desktop-support/com.palm.db.json.pub $ROOTFS/usr/share/ls2/roles/pub/com.palm.db.json
     cp -f desktop-support/com.palm.db.json.prv $ROOTFS/usr/share/ls2/roles/prv/com.palm.db.json
@@ -987,7 +987,7 @@ function build_activitymanager
     make $JOBS
     make install
     # NOTE: Make binary findable in /usr/lib/luna so ls2 can match the role file
-    cp activitymanager "${ROOTFS}/usr/lib/luna/"
+    cp -f activitymanager "${ROOTFS}/usr/lib/luna/"
     cp -f ../desktop-support/com.palm.activitymanager.json.pub $ROOTFS/usr/share/ls2/roles/pub/com.palm.activitymanager.json
     cp -f ../desktop-support/com.palm.activitymanager.json.prv $ROOTFS/usr/share/ls2/roles/prv/com.palm.activitymanager.json
     cp -f ../desktop-support/com.palm.activitymanager.service.pub $ROOTFS/usr/share/ls2/services/com.palm.activitymanager.service
@@ -1121,7 +1121,7 @@ function build_filecache
     $CMAKE -D WEBOS_INSTALL_ROOT:PATH=${LUNA_STAGING} -DCMAKE_INSTALL_PREFIX=${LUNA_STAGING} ..
     make $JOBS
     make install
-    cp filecache "${ROOTFS}/usr/lib/luna/"
+    cp -f filecache "${ROOTFS}/usr/lib/luna/"
     cp -f ../desktop-support/com.palm.filecache.json.pub $ROOTFS/usr/share/ls2/roles/pub/com.palm.filecache.json
     cp -f ../desktop-support/com.palm.filecache.json.prv $ROOTFS/usr/share/ls2/roles/prv/com.palm.filecache.json
     cp -f ../desktop-support/com.palm.filecache.service.pub $ROOTFS/usr/share/ls2/services/com.palm.filecache.service
@@ -1215,6 +1215,11 @@ mkdir -p ${ROOTFS}/var/palm
 mkdir -p ${ROOTFS}/var/usr/palm
 set -x
 
+if [ ! -f "$BASE/build_version_${VERSION}" ] ; then
+  echo "Build script has changed.  Force a clean build"
+  export SKIPSTUFF=0
+fi
+
 export LSM_TAG="0.901"
 if [ ! -d "$BASE/luna-sysmgr" ] || [ ! -d "$BASE/tarballs" ] || [ ! -e "$BASE/tarballs/luna-sysmgr_${LSM_TAG}.zip" ] ; then
     do_fetch openwebos/luna-sysmgr ${LSM_TAG} luna-sysmgr
@@ -1288,6 +1293,7 @@ build mojomail 1.03
 
 echo ""
 echo "Complete. "
+touch $BASE/build_version_$VERSION
 echo ""
 echo "Binaries are in $LUNA_STAGING/lib, $LUNA_STAGING/bin"
 echo ""

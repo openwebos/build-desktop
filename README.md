@@ -2,8 +2,6 @@ build-desktop
 =============
 
 The scripts in this repository are used to build, install, and run Open webOS on an Ubuntu Linux desktop computer.
- 
-This is the current active development repository for the desktop build scripts for Open webOS.
 
 
 How to Build on Ubuntu Linux
@@ -15,8 +13,8 @@ Note:  Builds on Ubuntu Server (or other non-desktop) installations are not curr
 
 Note:  Builds on 64-bit machines are not currently supported (or working).
 
-a) Prerequisites
-----------------
+Prerequisites
+-------------
 
   * Ensure you have a fast and reliable internet connection since you'll be downloading about 500MB
 
@@ -50,35 +48,41 @@ a) Prerequisites
   * cmake version 2.8.7 will be fetched and used for the build; there is no need to install it.
 
 
-b) Getting the code
--------------------
+Downloading
+-----------
 
-Get the build-desktop zip file and unzip it into a known directory or better yet, "git clone" the repository.
-  
-c) Building Open webOS
-----------------------
+Download the zip file and unzip it into an empty directory or better yet, "git clone" the repository.
+
+
+Building Open webOS
+-------------------
  
 Change to the folder where you downloaded the build-desktop scripts and run the build script:
 
         ./build-webos-desktop.sh
 
-Note: This will typically take one to three hours, depending on the speed of your system and of your internet connection. The build will go much faster on a multi-core machine.
+Note: This will typically take one to three hours, depending on the speed of your system and of your internet connection. The build will go much faster on a multi-core machine.  
+If you experience build errors, try the following:  
+  * Verify you are on a compatible system
+  * Reapply the prerequisite components
+  * Run the build script with the clean parameter: "./build-webos-desktop.sh clean"
 
-d) Installing Open webOS
-------------------------
+Installing Open webOS
+---------------------
 
 Change to the folder where the build-desktop scripts are located (if necessary) and run the "install" script to create expected folders and symlinks into various system directories:
 
         sudo ./install-webos-desktop.sh
 
-In general, you should only have to run the install script once (unless you update to a newer version).
+In general, you should only have to run the install script once (unless you update to a newer version of the script).
 
 You can run "sudo ./install-webos-desktop.sh remove" to remove the system folders and symlinks.
+
 
 How to Run on Ubuntu Linux
 ==========================
 
-Please note that this version of the build provides minimal runtime functionality.
+Please note that this version of the build does not provide full runtime functionality.
 
 1) Change to the folder where the build-desktop scripts are located (if necessary).
 
@@ -92,9 +96,9 @@ Please note that this version of the build provides minimal runtime functionalit
 
         ./service-bus.sh services  
 
-  * The message __Services started!__ indicates success.  You can safely ignore error messages.  
+  * The message `Services started!` indicates success.  You can safely ignore error messages.  
 
-4) The first time you start, you'll need to create a default account: 
+4) The first time you start, you'll need to create a default account:
 
         ./service-bus.sh init
 
@@ -111,7 +115,6 @@ Please note that this version of the build provides minimal runtime functionalit
 # Known Issues
 
   * Error messages are generated in the LunaService log output, which can be ignored.
-  * Since the components supporting "Just Type" have not yet been released, attempting to enter text in the "Just Type" field will not work as expected.
   * The email application may not work properly.
 
 # Copyright and License Information

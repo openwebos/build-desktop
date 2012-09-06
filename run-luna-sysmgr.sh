@@ -43,7 +43,7 @@ if [ "$1" = "--help" ] ; then
     echo " "
     exit
 elif [ "$1" = "--version" ] ; then
-    echo "Desktop run script for Open webOS #3"
+    echo "Desktop run script for Open webOS #7"
     exit
 elif [ "$1" = "-q" ] ; then
     REDIRECT="-q"
