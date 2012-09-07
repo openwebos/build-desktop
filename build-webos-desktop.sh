@@ -1257,7 +1257,7 @@ build luna-systemui 0.90
 
 build enyo-1.0 128.2
 build core-apps 1.0.2
-build isis-browser 0.2
+build isis-browser 0.21
 
 build foundation-frameworks 1.0
 build mojoservice-frameworks 1.0
