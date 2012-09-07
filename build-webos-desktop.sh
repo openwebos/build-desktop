@@ -17,6 +17,7 @@
 #
 # LICENSE@@@
 
+export VERSION=7
 
 if [ "$1" = "clean" ] ; then
   export SKIPSTUFF=0
@@ -34,7 +35,7 @@ elif [ "$1" = "--help" ] ; then
     echo " "
     exit
 elif [ "$1" = "--version" ] ; then
-    echo "Desktop build script for Open webOS #3"
+    echo "Desktop build script for Open webOS #${VERSION}"
     exit
 elif  [ -n "$1" ] ; then
     echo "Parameter $1 not recognized"
@@ -238,9 +239,7 @@ function build_nyx-lib
 ######################
 function build_qt4
 {
-    if [ ! -d $BASE/qt4 ] ; then
-      do_fetch openwebos/qt $1 qt4
-    fi
+    do_fetch openwebos/qt $1 qt4
     export STAGING_DIR=${LUNA_STAGING}
     if [ ! -f $BASE/qt-build-desktop/Makefile ] ; then
         rm -rf $BASE/qt-build-desktop
@@ -250,9 +249,11 @@ function build_qt4
       cd $BASE/qt-build-desktop
       if [ ! -e ../qt4/palm-desktop-configure.orig ] ; then
         cp -f ../qt4/palm-desktop-configure ../qt4/palm-desktop-configure.orig
-        sed -i 's/-opensource/-opensource -fast -qconfig palm -no-dbus/' ../qt4/palm-desktop-configure
+        sed -i 's/-opensource/-opensource -qpa -fast -qconfig palm -no-dbus/' ../qt4/palm-desktop-configure
         sed -i 's/libs tools/libs/' ../qt4/palm-desktop-configure
       fi
+      # This export will be picked up by plugins/platforms/platforms.pro and xcb.pro
+      export WEBOS_CONFIG="webos desktop"
       ../qt4/palm-desktop-configure
     fi
     cd $BASE/qt-build-desktop
@@ -261,8 +262,10 @@ function build_qt4
 
     # Make alias to moc for BrowserServer build
     # (Could also fix w/sed in BrowserServer build for Makefile.Ubuntu)
-    cd ${LUNA_STAGING}/bin
-    ln -s moc-palm moc
+    if [ ! -e ${LUNA_STAGING}/bin/moc ]; then
+        cd ${LUNA_STAGING}/bin
+        ln -s moc-palm moc
+    fi
 }
 
 ################################
@@ -456,6 +459,9 @@ function build_luna-sysservice
     #cp debug-x86/LunaSysService $LUNA_STAGING/bin
     # NOTE: Make binary findable in /usr/lib/luna so ls2 can match the role file
     cp -f debug-x86/LunaSysService $ROOTFS/usr/lib/luna/
+    # ls-control is used by serviceinstaller
+    #chmod ugo+x ../desktop-support/ls-control
+    #cp -f ../desktop-support/ls-control $ROOTFS/usr/lib/luna/
 
     # TODO: cmake should do this for us (after we switch)
     cp -rf files/conf/* ${ROOTFS}/etc/palm
@@ -499,6 +505,32 @@ function build_core-apps
       cp -rf ${APP}/configuration/db/kinds/* $ROOTFS/etc/palm/db/kinds/ 2>/dev/null || true
       cp -rf ${APP}/configuration/db/permissions/* $ROOTFS/etc/palm/db/permissions/ 2>/dev/null || true
     done
+}
+
+###########################################
+#  Fetch and build luna-applauncher
+###########################################
+function build_luna-applauncher
+{
+    do_fetch openwebos/luna-applauncher $1 luna-applauncher
+
+    ##### To build from your local clone of luna-applauncher, change the following line to "cd" to your clone's location
+    cd $BASE/luna-applauncher
+    mkdir -p $ROOTFS/usr/lib/luna/system/luna-applauncher
+    cp -rf . $ROOTFS/usr/lib/luna/system/luna-applauncher
+}
+
+###########################################
+#  Fetch and build luna-systemui
+###########################################
+function build_luna-systemui
+{
+    do_fetch openwebos/luna-systemui $1 luna-systemui
+
+    ##### To build from your local clone of luna-systemui, change the following line to "cd" to your clone's location
+    cd $BASE/luna-systemui
+    mkdir -p $ROOTFS/usr/lib/luna/system/luna-systemui
+    cp -rf . $ROOTFS/usr/lib/luna/system/luna-systemui
 }
 
 ###########################################
@@ -788,6 +820,24 @@ function build_AdapterBase
     #make $JOBS -e PREFIX=$LUNA_STAGING -f Makefile.Ubuntu install BUILD_TYPE=release
 }
 
+###########################################
+#  Fetch and build isis-browser
+###########################################
+function build_isis-browser
+{
+    do_fetch isis-project/isis-browser $1 isis-browser
+
+    ##### To build from your local clone of isis-browser, change the following line to "cd" to your clone's location
+    cd $BASE/isis-browser
+    mkdir -p $ROOTFS/etc/palm/db/kinds
+    mkdir -p $ROOTFS/etc/palm/db/permissions
+    mkdir -p $ROOTFS/usr/palm/applications/com.palm.app.browser
+    cp -rf * $ROOTFS/usr/palm/applications/com.palm.app.browser/
+    rm -rf $ROOTFS/usr/palm/applications/com.palm.app.browser/db/*
+    cp -rf db/kinds/* $ROOTFS/etc/palm/db/kinds/ 2>/dev/null || true
+    cp -rf db/permissions/* $ROOTFS/etc/palm/db/permissions/ 2>/dev/null || true
+}
+
 ################################
 #  Fetch and build BrowserServer
 ################################
@@ -805,15 +855,16 @@ function build_BrowserServer
     export STAGING_DIR=${LUNA_STAGING}
     export STAGING_INCDIR="${LUNA_STAGING}/include"
     export STAGING_LIBDIR="${LUNA_STAGING}/lib"
-    # link fails without -rpath-link to help liblunaservice find libcjson
-    export LDFLAGS="-Wl,-rpath-link $LUNA_STAGING/lib"
+    # link fails without -rpath to help liblunaservice find libcjson
+    # and with rpath-link it fails ar runtime
+    export LDFLAGS="-Wl,-rpath $LUNA_STAGING/lib"
     make $JOBS -e PREFIX=$LUNA_STAGING -f Makefile.Ubuntu all BUILD_TYPE=release
 
     # stage files
     make -e PREFIX=$LUNA_STAGING -f Makefile.Ubuntu stage BUILD_TYPE=release
     #make -f Makefile.Ubuntu stage BUILD_TYPE=release
 
-    #cp release-x86/BrowserServer $LUNA_STAGING/bin
+    #cp -f release-x86/BrowserServer $LUNA_STAGING/bin
 }
 
 #################################
@@ -839,8 +890,8 @@ function build_BrowserAdapter
 
     # TODO: Might need to install files (maybe more than just these) in BrowserAdapterData...
     #mkdir -p $LUNA_STAGING/lib/BrowserPlugins/BrowserAdapterData
-    #cp data/launcher-bookmark-alpha.png $LUNA_STAGING/lib/BrowserPlugins/BrowserAdapterData
-    #cp data/launcher-bookmark-overlay.png $LUNA_STAGING/lib/BrowserPlugins/BrowserAdapterData
+    #cp -f data/launcher-bookmark-alpha.png $LUNA_STAGING/lib/BrowserPlugins/BrowserAdapterData
+    #cp -f data/launcher-bookmark-overlay.png $LUNA_STAGING/lib/BrowserPlugins/BrowserAdapterData
 }
 
 #########################
@@ -857,7 +908,7 @@ function build_nodejs
     # NOTE: Make binary findable in /usr/palm/nodejs so ls2 can match the role file
     # role file is com.palm.nodejs.json (from nodejs-module-webos-sysbus)
     # run-js-service (from mojoservicelauncher) calls /usr/palm/nodejs/node (not /usr/lib/luna/node)
-    cp default/node "${ROOTFS}/usr/palm/nodejs/node"
+    cp -f default/node "${ROOTFS}/usr/palm/nodejs/node"
 }
 
 #################################
@@ -893,7 +944,7 @@ function build_db8
     cd $BASE/db8
     make $JOBS -e PREFIX=$LUNA_STAGING -f Makefile.Ubuntu install BUILD_TYPE=release
     # NOTE: Make binary findable in /usr/lib/luna so ls2 can match the role file
-    cp release-linux-x86/mojodb-luna "${ROOTFS}/usr/lib/luna/"
+    cp -f release-linux-x86/mojodb-luna "${ROOTFS}/usr/lib/luna/"
     # TODO: remove after switching to cmake
     cp -f desktop-support/com.palm.db.json.pub $ROOTFS/usr/share/ls2/roles/pub/com.palm.db.json
     cp -f desktop-support/com.palm.db.json.prv $ROOTFS/usr/share/ls2/roles/prv/com.palm.db.json
@@ -914,7 +965,7 @@ function build_configurator
     cd $BASE/configurator
     ARCH_LDFLAGS="-Wl,-rpath-link $LUNA_STAGING/lib" make $JOBS -f Makefile.Ubuntu
     # NOTE: Make binary findable in /usr/lib/luna so ls2 can match the role file
-    cp debug-linux-x86/configurator "${ROOTFS}/usr/lib/luna/"
+    cp -f debug-linux-x86/configurator "${ROOTFS}/usr/lib/luna/"
     cp -f desktop-support/com.palm.configurator.json.prv $ROOTFS/usr/share/ls2/roles/prv/com.palm.configurator.json
     cp -f desktop-support/com.palm.configurator.service.prv $ROOTFS/usr/share/ls2/system-services/com.palm.configurator.service
 }
@@ -936,7 +987,7 @@ function build_activitymanager
     make $JOBS
     make install
     # NOTE: Make binary findable in /usr/lib/luna so ls2 can match the role file
-    cp activitymanager "${ROOTFS}/usr/lib/luna/"
+    cp -f activitymanager "${ROOTFS}/usr/lib/luna/"
     cp -f ../desktop-support/com.palm.activitymanager.json.pub $ROOTFS/usr/share/ls2/roles/pub/com.palm.activitymanager.json
     cp -f ../desktop-support/com.palm.activitymanager.json.prv $ROOTFS/usr/share/ls2/roles/prv/com.palm.activitymanager.json
     cp -f ../desktop-support/com.palm.activitymanager.service.pub $ROOTFS/usr/share/ls2/services/com.palm.activitymanager.service
@@ -1002,6 +1053,63 @@ function build_jemalloc
     make install
 }
 
+###########################
+#  Fetch and build librolegen
+###########################
+function build_librolegen
+{
+    do_fetch openwebos/librolegen $1 librolegen submissions/
+    
+    ##### To build from your local clone of librolegen, change the following line to "cd" to your clone's location
+    cd $BASE/librolegen
+    mkdir -p build
+    cd build
+    $CMAKE -D WEBOS_INSTALL_ROOT:PATH=${LUNA_STAGING} -DCMAKE_INSTALL_PREFIX=${LUNA_STAGING} ..
+    make $JOBS
+    make install
+}
+
+###########################
+#  Fetch and build serviceinstaller
+###########################
+function build_serviceinstaller
+{
+    do_fetch openwebos/serviceinstaller $1 serviceinstaller
+    
+    ##### To build from your local clone of serviceinstaller, change the following line to "cd" to your clone's location
+    cd $BASE/serviceinstaller
+    mkdir -p build
+    cd build
+    $CMAKE -D WEBOS_INSTALL_ROOT:PATH=${LUNA_STAGING} -DCMAKE_INSTALL_PREFIX=${LUNA_STAGING} ..
+    make $JOBS
+    make install
+}
+
+###########################
+#  Fetch and build luna-universalsearchmgr
+###########################
+function build_luna-universalsearchmgr
+{
+    do_fetch openwebos/luna-universalsearchmgr $1 luna-universalsearchmgr
+    
+    ##### To build from your local clone of luna-universalsearchmgr, change the following line to "cd" to your clone's location
+    cd $BASE/luna-universalsearchmgr
+    mkdir -p build
+    cd build
+    $CMAKE -D WEBOS_INSTALL_ROOT:PATH=${LUNA_STAGING} -DCMAKE_INSTALL_PREFIX=${LUNA_STAGING} ..
+    make $JOBS
+    make install
+    # NOTE: Make binary findable in /usr/lib/luna so luna-universalsearchmgr can match the role file
+    cp -f $LUNA_STAGING/usr/sbin/luna-universalsearchmgr "${ROOTFS}/usr/lib/luna/"
+    cp -f ../desktop-support/com.palm.universalsearch.json.pub $ROOTFS/usr/share/ls2/roles/pub/com.palm.universalsearch.json
+    cp -f ../desktop-support/com.palm.universalsearch.json.prv $ROOTFS/usr/share/ls2/roles/prv/com.palm.universalsearch.json
+    cp -f ../desktop-support/com.palm.universalsearch.service.pub $ROOTFS/usr/share/ls2/services/com.palm.universalsearch.service
+    cp -f ../desktop-support/com.palm.universalsearch.service.prv $ROOTFS/usr/share/ls2/system-services/com.palm.universalsearch.service
+    mkdir -p "${ROOTFS}/usr/palm/universalsearchmgr/resources/en_us"
+    cp -f ../desktop-support/UniversalSearchList.json "${ROOTFS}/usr/palm/universalsearchmgr/resources/en_us"
+    
+}
+
 ############################
 #  Fetch and build filecache
 ############################
@@ -1013,7 +1121,7 @@ function build_filecache
     $CMAKE -D WEBOS_INSTALL_ROOT:PATH=${LUNA_STAGING} -DCMAKE_INSTALL_PREFIX=${LUNA_STAGING} ..
     make $JOBS
     make install
-    cp filecache "${ROOTFS}/usr/lib/luna/"
+    cp -f filecache "${ROOTFS}/usr/lib/luna/"
     cp -f ../desktop-support/com.palm.filecache.json.pub $ROOTFS/usr/share/ls2/roles/pub/com.palm.filecache.json
     cp -f ../desktop-support/com.palm.filecache.json.prv $ROOTFS/usr/share/ls2/roles/prv/com.palm.filecache.json
     cp -f ../desktop-support/com.palm.filecache.service.pub $ROOTFS/usr/share/ls2/services/com.palm.filecache.service
@@ -1107,13 +1215,18 @@ mkdir -p ${ROOTFS}/var/palm
 mkdir -p ${ROOTFS}/var/usr/palm
 set -x
 
-export LSM_TAG="0.900"
+if [ ! -f "$BASE/build_version_${VERSION}" ] ; then
+  echo "Build script has changed.  Force a clean build"
+  export SKIPSTUFF=0
+fi
+
+export LSM_TAG="0.901"
 if [ ! -d "$BASE/luna-sysmgr" ] || [ ! -d "$BASE/tarballs" ] || [ ! -e "$BASE/tarballs/luna-sysmgr_${LSM_TAG}.zip" ] ; then
     do_fetch openwebos/luna-sysmgr ${LSM_TAG} luna-sysmgr
 fi
-#if [ -d $BASE/luna-sysmgr ] ; then
-#    rm -f $BASE/luna-sysmgr/luna-desktop-build.stamp
-#fi
+if [ -d $BASE/luna-sysmgr ] ; then
+    rm -f $BASE/luna-sysmgr/luna-desktop-build.stamp
+fi
 
 # Build a local version of cmake 2.8.7 so that cmake-modules-webos doesn't have to write to the OS-supplied CMake modules directory
 build cmake
@@ -1124,19 +1237,27 @@ build pbnjson 2
 build pmloglib 21
 build nyx-lib 58
 build luna-service2 140
-build qt4 0.33
+build qt4 0.34
 build npapi-headers 0.4
 build luna-webkit-api 0.90
 build webkit 0.3
+
 build luna-sysmgr-ipc 0.90
 build luna-sysmgr-ipc-messages 0.90
 build luna-sysmgr $LSM_TAG
 
 build luna-prefs 0.91
 build luna-sysservice 0.92
+build librolegen 16
+##build serviceinstaller 0.90
+build luna-universalsearchmgr 0.91
+
+build luna-applauncher 0.90
+build luna-systemui 0.90
 
 build enyo-1.0 128.2
 build core-apps 1.0.2
+build isis-browser 0.21
 
 build foundation-frameworks 1.0
 build mojoservice-frameworks 1.0
@@ -1172,6 +1293,7 @@ build mojomail 1.03
 
 echo ""
 echo "Complete. "
+touch $BASE/build_version_$VERSION
 echo ""
 echo "Binaries are in $LUNA_STAGING/lib, $LUNA_STAGING/bin"
 echo ""
