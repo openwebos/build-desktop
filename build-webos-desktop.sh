@@ -963,11 +963,15 @@ function build_configurator
 
     ##### To build from your local clone of configurator, change the following line to "cd" to your clone's location
     cd $BASE/configurator
-    ARCH_LDFLAGS="-Wl,-rpath-link $LUNA_STAGING/lib" make $JOBS -f Makefile.Ubuntu
+    mkdir -p $BASE/configurator/build
+    cd $BASE/configurator/build
+    $CMAKE -D WEBOS_INSTALL_ROOT:PATH=${LUNA_STAGING} -DCMAKE_INSTALL_PREFIX=${LUNA_STAGING} ..
+    make $JOBS
+    make install
     # NOTE: Make binary findable in /usr/lib/luna so ls2 can match the role file
-    cp -f debug-linux-x86/configurator "${ROOTFS}/usr/lib/luna/"
-    cp -f desktop-support/com.palm.configurator.json.prv $ROOTFS/usr/share/ls2/roles/prv/com.palm.configurator.json
-    cp -f desktop-support/com.palm.configurator.service.prv $ROOTFS/usr/share/ls2/system-services/com.palm.configurator.service
+    cp -f configurator "${ROOTFS}/usr/lib/luna/"
+    cp -f ../desktop-support/com.palm.configurator.json.prv $ROOTFS/usr/share/ls2/roles/prv/com.palm.configurator.json
+    cp -f ../desktop-support/com.palm.configurator.service.prv $ROOTFS/usr/share/ls2/system-services/com.palm.configurator.service
 }
 
 #################################
@@ -992,6 +996,9 @@ function build_activitymanager
     cp -f ../desktop-support/com.palm.activitymanager.json.prv $ROOTFS/usr/share/ls2/roles/prv/com.palm.activitymanager.json
     cp -f ../desktop-support/com.palm.activitymanager.service.pub $ROOTFS/usr/share/ls2/services/com.palm.activitymanager.service
     cp -f ../desktop-support/com.palm.activitymanager.service.prv $ROOTFS/usr/share/ls2/system-services/com.palm.activitymanager.service
+    # Copy db8 files 
+      cp -rf ../files/db8/kinds/* $ROOTFS/etc/palm/db/kinds/ 2>/dev/null || true
+      cp -rf ../files/db8/permissions/* $ROOTFS/etc/palm/db/permissions/ 2>/dev/null || true
 }
 
 #######################################
@@ -1209,7 +1216,6 @@ mkdir -p ${ROOTFS}/usr/palm/services
 mkdir -p ${ROOTFS}/usr/palm/smartkey
 mkdir -p ${LUNA_STAGING}/var/file-cache
 mkdir -p ${ROOTFS}/var/db
-mkdir -p ${ROOTFS}/var/file-cache
 mkdir -p ${ROOTFS}/var/luna
 mkdir -p ${ROOTFS}/var/palm
 mkdir -p ${ROOTFS}/var/usr/palm
@@ -1256,7 +1262,7 @@ build luna-applauncher 0.90
 build luna-systemui 0.90
 
 build enyo-1.0 128.2
-build core-apps 1.0.2
+build core-apps 1.0.4
 build isis-browser 0.21
 
 build foundation-frameworks 1.0
@@ -1279,7 +1285,7 @@ build node-addon pmlog 10
 build node-addon dynaload 11
 
 build db8 55
-build configurator 1.01
+build configurator 1.03
 
 build activitymanager 108
 build pmstatemachineengine 13

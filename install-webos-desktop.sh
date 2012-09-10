@@ -177,7 +177,6 @@ ln -sf ${ROOTFS}/usr/palm /usr/palm
 #rm -f /usr/share/dbus-1/system-services/com.palm.*
 
 ln -sf ${ROOTFS}/var/db /var/db
-ln -sf -T ${ROOTFS}/var/file-cache /var/file-cache
 ln -sf ${ROOTFS}/var/luna /var/luna
 ln -sf ${ROOTFS}/var/palm /var/palm
 

@@ -217,9 +217,15 @@ send)
   luna-send "$@"
   ;;
 init)
+  service_start filecache
+  service_start mojodb-luna -c /etc/palm/mojodb.conf /var/db
   luna-send -n 1 palm://com.palm.configurator/run '{"types":["dbkinds","filecache"]}'
   luna-send -n 1 palm://com.palm.configurator/run '{"types":["dbpermissions"]}'
+  service_start LunaSysService
+  service_start activitymanager
   luna-send -n 1 palm://com.palm.service.accounts/createLocalAccount '{}'
+  sleep 2
+  services_stop
   ;;
 
 status)
