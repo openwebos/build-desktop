@@ -121,6 +121,10 @@ if [ -d /etc/palm ] ; then
     do_remove_folder /var/luna
     do_remove_folder /usr/lib/luna
     
+    if [ -h /var/file-cache ] ; then
+     	unlink /var/file-cache
+    fi
+ 
     if [ -h /var/usr/palm ] ; then
         rm -f /usr/share/dbus-1/services/com.palm.*
         rm -f /usr/share/dbus-1/system-services/com.palm.*

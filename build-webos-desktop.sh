@@ -963,8 +963,8 @@ function build_configurator
 
     ##### To build from your local clone of configurator, change the following line to "cd" to your clone's location
     cd $BASE/configurator
-    mkdir -p $BASE/configurator/build
-    cd $BASE/configurator/build
+    mkdir -p build
+    cd build
     $CMAKE -D WEBOS_INSTALL_ROOT:PATH=${LUNA_STAGING} -DCMAKE_INSTALL_PREFIX=${LUNA_STAGING} ..
     make $JOBS
     make install
