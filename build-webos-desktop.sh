@@ -17,7 +17,7 @@
 #
 # LICENSE@@@
 
-export VERSION=7
+export VERSION=7.1
 
 if [ "$1" = "clean" ] ; then
   export SKIPSTUFF=0
