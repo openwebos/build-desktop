@@ -636,6 +636,7 @@ function build_app-services
       cp -rf ${SERVICE} $ROOTFS/usr/palm/services/
       cp -rf ${SERVICE}/db/kinds/* $ROOTFS/etc/palm/db/kinds/ 2>/dev/null || true
       cp -rf ${SERVICE}/db/permissions/* $ROOTFS/etc/palm/db/permissions/ 2>/dev/null || true
+      cp -rf ${SERVICE}/activities/* $ROOTFS/etc/palm/activities/ 2>/dev/null || true
       cp -rf ${SERVICE}/files/sysbus/*.json $ROOTFS/usr/share/ls2/roles/prv 2>/dev/null || true
       #NOTE: services go in $ROOTFS/usr/share/ls2/system-services, which is linked from /usr/share/ls2/system-services
       cp -rf ${SERVICE}/desktop-support/*.service $ROOTFS/usr/share/ls2/system-services 2>/dev/null || true
@@ -1188,6 +1189,7 @@ mkdir -p ${ROOTFS}/etc/palm
 mkdir -p ${ROOTFS}/etc/palm/db_kinds
 mkdir -p ${ROOTFS}/etc/palm/db/kinds
 mkdir -p ${ROOTFS}/etc/palm/db/permissions
+mkdir -p ${ROOTFS}/etc/palm/activities
 # NOTE: desktop ls2 .conf files will look for services in /usr/share/ls2/*services
 # NOTE: but on device they live in /usr/share/dbus-1/*services (which is used by Ubuntu dbus)
 # NOTE: To avoid problems, we'll symlink from the dbus-1 path in $ROOTFS, but our install
@@ -1285,7 +1287,7 @@ build node-addon pmlog 10
 build node-addon dynaload 11
 
 build db8 55
-build configurator 1.03
+build configurator 1.04
 
 build activitymanager 108
 build pmstatemachineengine 13

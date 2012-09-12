@@ -225,6 +225,7 @@ init)
   service_start activitymanager
   luna-send -n 1 palm://com.palm.service.accounts/createLocalAccount '{}'
   sleep 2
+  luna-send -n 1 palm://com.palm.configurator/run '{"types":["activities"]}'
   services_stop
   ;;
 
