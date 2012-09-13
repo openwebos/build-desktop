@@ -710,7 +710,7 @@ function build_luna-sysmgr
     ##### To build from your local clone of luna-sysmgr, change the following line to "cd" to your clone's location
     cd $BASE/luna-sysmgr
 
-    if [ ! -e luna-desktop-build.stamp ] ; then
+    if [ ! -e "luna-desktop-build-${1}.stamp" ] ; then
         if [ $SKIPSTUFF -eq 0 ] && [ -e debug-x86 ] && [ -e debug-x86/.obj ] ; then
             rm -f debug-x86/LunaSysMgr
             rm -rf debug-x86/.obj/*
@@ -1150,14 +1150,14 @@ function build
         BUILD_DIR=$1
     fi
     if [ $SKIPSTUFF -eq 0 ] || [ ! -d $BASE/$BUILD_DIR ] || \
-       [ ! -e $BASE/$BUILD_DIR/luna-desktop-build.stamp ] ; then
+       [ ! -e $BASE/$BUILD_DIR/luna-desktop-build-$2.stamp ] ; then
         echo
         echo "Building ${BUILD_DIR} ..."
         echo
         time build_$1 $2 $3 $4
         echo
         if [ -d $BASE/$BUILD_DIR ] ; then
-            touch $BASE/$BUILD_DIR/luna-desktop-build.stamp
+            touch $BASE/$BUILD_DIR/luna-desktop-build-$2.stamp
         fi
         return
     fi
@@ -1223,10 +1223,10 @@ mkdir -p ${ROOTFS}/var/palm
 mkdir -p ${ROOTFS}/var/usr/palm
 set -x
 
-if [ ! -f "$BASE/build_version_${VERSION}" ] ; then
-  echo "Build script has changed.  Force a clean build"
-  export SKIPSTUFF=0
-fi
+#if [ ! -f "$BASE/build_version_${VERSION}" ] ; then
+#  echo "Build script has changed.  Force a clean build"
+#  export SKIPSTUFF=0
+#fi
 
 export LSM_TAG="0.901"
 if [ ! -d "$BASE/luna-sysmgr" ] || [ ! -d "$BASE/tarballs" ] || [ ! -e "$BASE/tarballs/luna-sysmgr_${LSM_TAG}.zip" ] ; then
