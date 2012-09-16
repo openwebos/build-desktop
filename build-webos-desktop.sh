@@ -17,7 +17,7 @@
 #
 # LICENSE@@@
 
-export VERSION=7.1
+export VERSION=7.2
 
 if [ "$1" = "clean" ] ; then
   export SKIPSTUFF=0
@@ -241,7 +241,7 @@ function build_qt4
 {
     do_fetch openwebos/qt $1 qt4
     export STAGING_DIR=${LUNA_STAGING}
-    if [ ! -f $BASE/qt-build-desktop/Makefile ] ; then
+    if [ ! -f $BASE/qt-build-desktop/Makefile ] || [ ! -e $BASE/qt4/luna-desktop-build-$1.stamp ] ; then
         rm -rf $BASE/qt-build-desktop
     fi
     if [ ! -d $BASE/qt-build-desktop ] ; then
@@ -300,6 +300,7 @@ function build_npapi-headers
 
     ##### To build from your local clone of npapi-headers, change the following line to "cd" to your clone's location
     cd $BASE/npapi-headers
+
     mkdir -p $LUNA_STAGING/include/webkit/npapi
     cp -f *.h $LUNA_STAGING/include/webkit/npapi
 }
@@ -313,6 +314,7 @@ function build_luna-webkit-api
 
     ##### To build from your local clone of luna-webkit-api, change the following line to "cd" to your clone's location
     cd $BASE/luna-webkit-api
+
     mkdir -p $LUNA_STAGING/include/ime
     if [ -d include/public/ime ] ; then
         cp -f include/public/ime/*.h $LUNA_STAGING/include/ime
@@ -388,6 +390,7 @@ function build_luna-sysmgr-ipc
 
     ##### To build from your local clone of luna-sysmgr-ipc, change the following line to "cd" to your clone's location
     cd $BASE/luna-sysmgr-ipc
+
     make -e PREFIX=$LUNA_STAGING -f Makefile.Ubuntu install BUILD_TYPE=release
 }
 
@@ -400,6 +403,7 @@ function build_luna-sysmgr-ipc-messages
 
      ##### To build from your local clone of luna-sysmgr-ipc-messages, change the following line to "cd" to your clone's location
     cd $BASE/luna-sysmgr-ipc-messages
+
     if [ -d include/public/messages ] ; then
         mkdir -p $LUNA_STAGING/include/sysmgr_ipc
         cp -f include/public/messages/*.h $LUNA_STAGING/include/sysmgr_ipc
@@ -417,6 +421,7 @@ function build_luna-prefs
 
     ##### To build from your local clone of luna-prefs, change the following line to "cd" to your clone's location
     cd $BASE/luna-prefs
+
     make $JOBS
     cp -d bin/lib/libluna-prefs.so* $LUNA_STAGING/lib
     cp include/lunaprefs.h $LUNA_STAGING/include
@@ -496,6 +501,7 @@ function build_core-apps
 
     ##### To build from your local clone of core-apps, change the following line to "cd" to your clone's location
     cd $BASE/core-apps
+
     # TODO: fix calculator appId:
     sed -i 's/com.palm.calculator/com.palm.app.calculator/' com.palm.app.calculator/appinfo.json
 
@@ -516,6 +522,7 @@ function build_luna-applauncher
 
     ##### To build from your local clone of luna-applauncher, change the following line to "cd" to your clone's location
     cd $BASE/luna-applauncher
+
     mkdir -p $ROOTFS/usr/lib/luna/system/luna-applauncher
     cp -rf . $ROOTFS/usr/lib/luna/system/luna-applauncher
 }
@@ -529,6 +536,7 @@ function build_luna-systemui
 
     ##### To build from your local clone of luna-systemui, change the following line to "cd" to your clone's location
     cd $BASE/luna-systemui
+
     mkdir -p $ROOTFS/usr/lib/luna/system/luna-systemui
     cp -rf . $ROOTFS/usr/lib/luna/system/luna-systemui
 }
@@ -703,7 +711,7 @@ function build_mojomail
 ##############################
 function build_luna-sysmgr
 {
-    if [ ! -d $BASE/luna-sysmgr ] || [ ! -e $BASE/luna-sysmgr/desktop-support/com.palm.luna.json.prv ] ; then
+    if [ ! -d $BASE/luna-sysmgr ]  || [ ! -e "$BASE/tarballs/luna-sysmgr_${1}.zip" ] ; then
         do_fetch openwebos/luna-sysmgr $1 luna-sysmgr
     fi
 
@@ -793,7 +801,10 @@ function build_luna-sysmgr
 function build_WebKitSupplemental
 {
     do_fetch isis-project/WebKitSupplemental $1 WebKitSupplemental
+
+    ##### To build from your local clone of WebKitSupplemental, change the following line to "cd" to your clone's location
     cd $BASE/WebKitSupplemental
+
     export QTDIR=$BASE/qt-build-desktop
     export QMAKE=$LUNA_STAGING/bin/qmake-palm
     export QMAKEPATH=$WEBKIT_DIR/Tools/qmake
@@ -812,7 +823,10 @@ function build_WebKitSupplemental
 function build_AdapterBase
 {
     do_fetch isis-project/AdapterBase $1 AdapterBase
+
+    ##### To build from your local clone of AdapterBase, change the following line to "cd" to your clone's location
     cd $BASE/AdapterBase
+
     export QMAKE=$LUNA_STAGING/bin/qmake-palm
     export QMAKEPATH=$WEBKIT_DIR/Tools/qmake
     $LUNA_STAGING/bin/qmake-palm
@@ -830,6 +844,7 @@ function build_isis-browser
 
     ##### To build from your local clone of isis-browser, change the following line to "cd" to your clone's location
     cd $BASE/isis-browser
+
     mkdir -p $ROOTFS/etc/palm/db/kinds
     mkdir -p $ROOTFS/etc/palm/db/permissions
     mkdir -p $ROOTFS/usr/palm/applications/com.palm.app.browser
@@ -874,7 +889,10 @@ function build_BrowserServer
 function build_BrowserAdapter
 {
     do_fetch isis-project/BrowserAdapter $1 BrowserAdapter
+
+    ##### To build from your local clone of db8, change the following line to "cd" to your clone's location
     cd $BASE/BrowserAdapter
+
     export QT_INSTALL_PREFIX=$LUNA_STAGING
     export STAGING_DIR=${LUNA_STAGING}
     export STAGING_INCDIR="${LUNA_STAGING}/include"
@@ -943,6 +961,7 @@ function build_db8
 
     ##### To build from your local clone of db8, change the following line to "cd" to your clone's location
     cd $BASE/db8
+
     make $JOBS -e PREFIX=$LUNA_STAGING -f Makefile.Ubuntu install BUILD_TYPE=release
     # NOTE: Make binary findable in /usr/lib/luna so ls2 can match the role file
     cp -f release-linux-x86/mojodb-luna "${ROOTFS}/usr/lib/luna/"
@@ -964,6 +983,7 @@ function build_configurator
 
     ##### To build from your local clone of configurator, change the following line to "cd" to your clone's location
     cd $BASE/configurator
+
     mkdir -p build
     cd build
     $CMAKE -D WEBOS_INSTALL_ROOT:PATH=${LUNA_STAGING} -DCMAKE_INSTALL_PREFIX=${LUNA_STAGING} ..
@@ -984,6 +1004,7 @@ function build_activitymanager
 
     ##### To build from your local clone of activitymanager, change the following line to "cd" to your clone's location
     cd $BASE/activitymanager
+
     mkdir -p build
     cd build
     #TODO: Remove this when db8 gets a pkgconfig file...
@@ -1067,9 +1088,10 @@ function build_jemalloc
 function build_librolegen
 {
     do_fetch openwebos/librolegen $1 librolegen submissions/
-    
+
     ##### To build from your local clone of librolegen, change the following line to "cd" to your clone's location
     cd $BASE/librolegen
+
     mkdir -p build
     cd build
     $CMAKE -D WEBOS_INSTALL_ROOT:PATH=${LUNA_STAGING} -DCMAKE_INSTALL_PREFIX=${LUNA_STAGING} ..
@@ -1086,6 +1108,7 @@ function build_serviceinstaller
     
     ##### To build from your local clone of serviceinstaller, change the following line to "cd" to your clone's location
     cd $BASE/serviceinstaller
+
     mkdir -p build
     cd build
     $CMAKE -D WEBOS_INSTALL_ROOT:PATH=${LUNA_STAGING} -DCMAKE_INSTALL_PREFIX=${LUNA_STAGING} ..
@@ -1102,13 +1125,14 @@ function build_luna-universalsearchmgr
     
     ##### To build from your local clone of luna-universalsearchmgr, change the following line to "cd" to your clone's location
     cd $BASE/luna-universalsearchmgr
+
     mkdir -p build
     cd build
     $CMAKE -D WEBOS_INSTALL_ROOT:PATH=${LUNA_STAGING} -DCMAKE_INSTALL_PREFIX=${LUNA_STAGING} ..
     make $JOBS
     make install
     # NOTE: Make binary findable in /usr/lib/luna so luna-universalsearchmgr can match the role file
-    cp -f $LUNA_STAGING/usr/sbin/luna-universalsearchmgr "${ROOTFS}/usr/lib/luna/"
+    cp -f $LUNA_STAGING/usr/sbin/luna-universalsearchmgr $ROOTFS/usr/lib/luna/LunaUniversalSearchMgr
     cp -f ../desktop-support/com.palm.universalsearch.json.pub $ROOTFS/usr/share/ls2/roles/pub/com.palm.universalsearch.json
     cp -f ../desktop-support/com.palm.universalsearch.json.prv $ROOTFS/usr/share/ls2/roles/prv/com.palm.universalsearch.json
     cp -f ../desktop-support/com.palm.universalsearch.service.pub $ROOTFS/usr/share/ls2/services/com.palm.universalsearch.service
@@ -1228,12 +1252,16 @@ set -x
 #  export SKIPSTUFF=0
 #fi
 
-export LSM_TAG="0.901"
+export LSM_TAG="0.905"
 if [ ! -d "$BASE/luna-sysmgr" ] || [ ! -d "$BASE/tarballs" ] || [ ! -e "$BASE/tarballs/luna-sysmgr_${LSM_TAG}.zip" ] ; then
     do_fetch openwebos/luna-sysmgr ${LSM_TAG} luna-sysmgr
 fi
 if [ -d $BASE/luna-sysmgr ] ; then
-    rm -f $BASE/luna-sysmgr/luna-desktop-build.stamp
+    rm -f $BASE/luna-sysmgr/luna-desktop-build*.stamp
+fi
+if [ ! -e $BASE/build_version_$VERSION ] && [ -d $BASE/luna-universalsearchmgr ] ; then
+    ## must force rebuild until version increments from 0.91
+    rm -f $BASE/luna-universalsearchmgr/luna-desktop-build*.stamp
 fi
 
 # Build a local version of cmake 2.8.7 so that cmake-modules-webos doesn't have to write to the OS-supplied CMake modules directory
@@ -1245,7 +1273,7 @@ build pbnjson 2
 build pmloglib 21
 build nyx-lib 58
 build luna-service2 140
-build qt4 0.34
+build qt4 0.35
 build npapi-headers 0.4
 build luna-webkit-api 0.90
 build webkit 0.3
