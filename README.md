@@ -6,7 +6,7 @@ The scripts in this repository are used to build, install, and run Open webOS on
 How to Build on Ubuntu Linux
 ============================
 
-Note:  The scripts have been successfully tested on both Ubuntu _Desktop_ 11.04 and 12.04 on  32-bit machines.
+Note:  The scripts have been successfully tested on both Ubuntu _Desktop_ 11.04 and 12.04 on 32-bit machines.
 
 Note:  Builds on Ubuntu Server (or other non-desktop) installations are not currently supported (or working).
 
@@ -36,11 +36,11 @@ Prerequisites
 		libc-ares-dev libsigc++-2.0-dev libglibmm-2.4-dev libdb4.8-dev \
 		libcurl4-openssl-dev
 
-        sudo apt-get install xcb libx11-xcb-dev libxcb-sync0-dev \
+        $ sudo apt-get install xcb libx11-xcb-dev libxcb-sync0-dev \
 		libxcb1-dev libxcb-keysyms1-dev libxcb-image0-dev libxcb-render-util0-dev \
 		libxcb-icccm1-dev
 
-        sudo apt-get build-dep qt4-qmake
+        $ sudo apt-get build-dep qt4-qmake
 
   * The components listed above are valid for both Ubuntu 11.04 and 12.04, except for libxcb-icccm1-dev which is libxcb-icccm4-dev on 12.04
 
