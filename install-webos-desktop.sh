@@ -120,6 +120,8 @@ if [ -d /etc/palm ] ; then
     do_remove_folder /var/palm
     do_remove_folder /var/luna
     do_remove_folder /usr/lib/luna
+    do_remove_folder /usr/lib/BrowserPlugins 
+    do_remove_folder /usr/lib/BrowserServerPlugin
     
     if [ -h /var/file-cache ] ; then
      	unlink /var/file-cache
@@ -185,6 +187,8 @@ ln -sf ${ROOTFS}/var/luna /var/luna
 ln -sf ${ROOTFS}/var/palm /var/palm
 
 ln -sf ${ROOTFS}/usr/lib/luna /usr/lib/luna
+ln -sf ${ROOTFS}/usr/lib/BrowserPlugins /usr/lib/BrowserPlugins
+ln -sf ${ROOTFS}/usr/lib/BrowserServerPlugins /usr/lib/BrowserServerPlugins
 
 mkdir -p /var/usr
 ln -sf ${ROOTFS}/var/usr/palm /var/usr/palm

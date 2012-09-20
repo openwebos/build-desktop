@@ -907,6 +907,10 @@ function build_BrowserAdapter
     # stage files
     make -e PREFIX=$LUNA_STAGING -f Makefile.Ubuntu stage BUILD_TYPE=release
 
+    # install plugin
+    mkdir -p ${ROOTFS}/usr/lib/BrowserPlugins
+    cp -f ${LUNA_STAGING}/lib/BrowserPlugins/BrowserAdapter.so "${ROOTFS}/usr/lib/BrowserPlugins/"
+
     # TODO: Might need to install files (maybe more than just these) in BrowserAdapterData...
     #mkdir -p $LUNA_STAGING/lib/BrowserPlugins/BrowserAdapterData
     #cp -f data/launcher-bookmark-alpha.png $LUNA_STAGING/lib/BrowserPlugins/BrowserAdapterData
