@@ -94,6 +94,12 @@ Please note that this version of the build does not provide full runtime functio
 3) The first time you start, you'll need to create a default account:
 
         $ ./service-bus.sh init
+  
+  * In order for the FileCache and Email to work properly, "user_xattr" attribute needs to be set on the filesystem where "luna-desktop-binaries/staging" is located. The command to set the attribute is given below.
+
+        $ sudo mount / -o remount,user_xattr
+
+  * Note that the above command will set the attribute temporarily on the filesystem, it will be reset to default settings when machine is rebooted. If you want to make it permenant, edit the file /etc/fstab to add the attribute. Please refer the Ubuntu documentation for more details.
 
 4) Start up the native webOS services on the service bus:
 

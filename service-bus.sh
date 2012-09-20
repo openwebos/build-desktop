@@ -137,6 +137,39 @@ hubd_monitor() {
   ls-monitor "$@"
 }
 
+check_fs_attribute() {
+  echo
+  echo "Checking filesystem attribute on ${LUNA_STAGING}"
+
+  varfs=`df ${LUNA_STAGING} | tail -1 | awk '{print $6}'`
+  echo " ${LUNA_STAGING} appears to be mounted on $varfs "
+
+  mountline=`cat /proc/mounts | grep -E "[[:graph:]]+[[:blank:]]+${varfs}[[:blank:]]+" | grep -v rootfs`
+  echo
+  echo "found it in /proc/mounts:"
+  echo "  $mountline"
+  #  returns something like: /dev/disk/by-uuid/f652a09b-f52a-4735-98b7-14da6c42ebd2 / ext3 rw,relatime,errors=remount-ro,data=ordered 0 0
+
+  mountedflags=`echo $mountline | awk '{print $4}'`
+  echo
+  echo "current attributes from /proc/mounts:"
+  echo "  $mountedflags"
+  #  returns something like: rw,relatime,errors=remount-ro,data=ordered
+  #                      or: defaults
+
+  if ! `echo $mountedflags | grep -qs user_xattr` ; then
+    echo
+    echo "user_xattr is NOT curently set!"
+    echo "without this attribute, FileCache and Email won't work properly."
+    echo "remount $varfs with extended attributes by typing:"
+    echo “sudo mount -o remount,user_xattr $varfs”
+    echo
+    sleep 1;
+  fi
+  echo
+}
+
+
 #########################################################
 
 BASE="${HOME}/luna-desktop-binaries"
@@ -198,12 +231,14 @@ services)
   echo "Halting old services..."
   services_stop
   echo
+  check_fs_attribute
   services_start
   echo
   ;;
 LunaSysService)
   service_start LunaSysService ;;
 filecache)
+  check_fs_attribute
   service_start filecache ;;
 activitymanager)
   service_start activitymanager ;;

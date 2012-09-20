@@ -591,10 +591,9 @@ function build_underscore
 ###########################################
 function build_mojoloader
 {
-    #TODO: mojoloader should be moved to openwebos/loadable-frameworks
-    do_fetch openwebos/build-desktop $1 mojoloader
+    do_fetch openwebos/mojoloader $1 mojoloader
     mkdir -p $ROOTFS/usr/palm/frameworks/
-    cp -rf $BASE/mojoloader/mojoloader/mojoloader.js $ROOTFS/usr/palm/frameworks/
+    cp -rf $BASE/mojoloader/mojoloader.js $ROOTFS/usr/palm/frameworks/
 }
 
 ###########################################
@@ -664,13 +663,11 @@ function build_app-services
 ###########################################
 function build_mojomail
 {
-    #TODO: mojomail should live in its own repo instead of app-services...
-    do_fetch openwebos/app-services $1 mojomail
-    rm -rf $BASE/mojomail/com.palm.service.* $BASE/mojomail/account-templates
-    cd $BASE/mojomail/mojomail
+    do_fetch openwebos/mojomail $1 mojomail submissions/
+    cd $BASE/mojomail
     for SUBDIR in common imap pop smtp ; do
-      mkdir -p $BASE/mojomail/mojomail/$SUBDIR/build
-      cd $BASE/mojomail/mojomail/$SUBDIR/build
+      mkdir -p $BASE/mojomail/$SUBDIR/build
+      cd $BASE/mojomail/$SUBDIR/build
       sed -i 's!DESTINATION /!DESTINATION !' ../CMakeLists.txt
       $CMAKE -D WEBOS_INSTALL_ROOT:PATH=${LUNA_STAGING} -DCMAKE_INSTALL_PREFIX=${LUNA_STAGING} ..
       #make $JOBS VERBOSE=1
@@ -683,10 +680,10 @@ function build_mojomail
 
     # TODO: (cmake should do this) install filecache types
     mkdir -p $ROOTFS/etc/palm/filecache_types
-    cp -rf $BASE/mojomail/mojomail/common/files/etc/palm/filecache_types/* $ROOTFS/etc/palm/filecache_types
+    cp -rf $BASE/mojomail/common/files/etc/palm/filecache_types/* $ROOTFS/etc/palm/filecache_types
 
     # NOTE: Make binaries findable in /usr/lib/luna so ls2 can match the role file
-    cd $BASE/mojomail/mojomail
+    cd $BASE/mojomail
     cp imap/build/mojomail-imap "${ROOTFS}/usr/lib/luna/"
     cp pop/build/mojomail-pop "${ROOTFS}/usr/lib/luna/"
     cp smtp/build/mojomail-smtp "${ROOTFS}/usr/lib/luna/"
@@ -1273,7 +1270,7 @@ build loadable-frameworks 1.0.1
 build app-services 1.02
 
 build underscore 8
-build mojoloader 4
+build mojoloader 1.0
 build mojoservicelauncher 70
 
 build WebKitSupplemental 0.4
@@ -1296,8 +1293,8 @@ build libsandbox 15
 build jemalloc 11
 build filecache 54
 
-#NOTE: mojomail depends on libsandbox, libpalmsocket, and pmstatemachine; and lives in app-services repo
-build mojomail 1.03
+#NOTE: mojomail depends on libsandbox, libpalmsocket, and pmstatemachine; 
+build mojomail 96 
 
 echo ""
 echo "Complete. "
