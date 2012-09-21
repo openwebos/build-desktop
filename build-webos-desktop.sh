@@ -901,6 +901,10 @@ function build_BrowserAdapter
     # BrowserAdapter generates a few warnings which will kill the build if we don't turn off -Werror
     sed -i 's/-Werror//' Makefile.inc
 
+    # Set TARGET_DESKTOP in CFLAGS, rather than ISIS_DESKTOP
+    # This is needed for the Browser app to run in the Open WebOS desktop build
+    sed -i 's/ISIS_DESKTOP/TARGET_DESKTOP/' Makefile.Ubuntu
+
     #make $JOBS -f Makefile.Ubuntu BUILD_TYPE=release
     make $JOBS -e PREFIX=$LUNA_STAGING -f Makefile.Ubuntu all BUILD_TYPE=release
 
