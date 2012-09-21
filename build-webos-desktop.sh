@@ -430,6 +430,22 @@ function build_luna-prefs
 }
 
 #################################
+# Fetch and build luna-init
+################################# 
+function build_luna-init
+{
+    do_fetch openwebos/luna-init $1 luna-init versions/
+
+    mkdir -p $BASE/luna-init/build
+    cd $BASE/luna-init/build
+    $CMAKE -D WEBOS_INSTALL_ROOT:PATH=${LUNA_STAGING} -DCMAKE_INSTALL_PREFIX=${LUNA_STAGING} ..
+  
+    make $JOBS
+    make install
+    cp -f $BASE/luna-init/files/conf/*.json $ROOTFS/usr/palm/
+}
+
+#################################
 # Fetch and build luna-sysservice
 ################################# 
 function build_luna-sysservice 
@@ -504,6 +520,7 @@ function build_core-apps
       cp -rf ${APP} $ROOTFS/usr/palm/applications/
       cp -rf ${APP}/configuration/db/kinds/* $ROOTFS/etc/palm/db/kinds/ 2>/dev/null || true
       cp -rf ${APP}/configuration/db/permissions/* $ROOTFS/etc/palm/db/permissions/ 2>/dev/null || true
+      cp -rf ${APP}/configuration/activities/* $ROOTFS/etc/palm/activities/ 2>/dev/null || true
     done
 }
 
@@ -1251,6 +1268,7 @@ build luna-sysmgr-ipc 0.90
 build luna-sysmgr-ipc-messages 0.90
 build luna-sysmgr $LSM_TAG
 
+build luna-init 2.0.0
 build luna-prefs 0.91
 build luna-sysservice 0.92
 build librolegen 16
@@ -1261,7 +1279,7 @@ build luna-applauncher 0.90
 build luna-systemui 0.90
 
 build enyo-1.0 128.2
-build core-apps 1.0.4
+build core-apps 1.0.5
 build isis-browser 0.21
 
 build foundation-frameworks 1.0
