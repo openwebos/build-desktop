@@ -17,7 +17,7 @@
 #
 # LICENSE@@@
 
-export VERSION=7.2
+export VERSION=7.3
 
 if [ "$1" = "clean" ] ; then
   export SKIPSTUFF=0
@@ -599,10 +599,9 @@ function build_underscore
 ###########################################
 function build_mojoloader
 {
-    #TODO: mojoloader should be moved to openwebos/loadable-frameworks
-    do_fetch openwebos/build-desktop $1 mojoloader
+    do_fetch openwebos/mojoloader $1 mojoloader submissions/
     mkdir -p $ROOTFS/usr/palm/frameworks/
-    cp -rf $BASE/mojoloader/mojoloader/mojoloader.js $ROOTFS/usr/palm/frameworks/
+    cp -rf $BASE/mojoloader/mojoloader.js $ROOTFS/usr/palm/frameworks/
 }
 
 ###########################################
@@ -626,6 +625,42 @@ function build_mojoservicelauncher
     # jslauncher is used by com.palm.service.calendar.reminders
     chmod ugo+x ../desktop-support/jslauncher
     cp -f ../desktop-support/jslauncher $ROOTFS/usr/lib/luna/
+}
+
+###########################################
+#  Fetch and build mojolocation-stub
+###########################################
+function build_mojolocation-stub
+{
+    do_fetch openwebos/mojolocation-stub $1 mojolocation-stub submissions/
+
+    ##### To build from your local clone of mojolocation-stub, change the following line to "cd" to your clone's location
+    cd $BASE/mojolocation-stub
+    mkdir -p $ROOTFS/usr/palm/services/com.palm.location
+    cp -rf *.json *.js $ROOTFS/usr/palm/services/com.palm.location
+    cp -rf files/sysbus/*.json $ROOTFS/usr/share/ls2/roles/prv
+    cp -rf files/sysbus/*.json $ROOTFS/usr/share/ls2/roles/pub
+    #NOTE: services go in $ROOTFS/usr/share/ls2/system-services, which is linked from /usr/share/ls2/system-services
+    cp -rf desktop-support/*.service $ROOTFS/usr/share/ls2/system-services
+    cp -rf desktop-support/*.service $ROOTFS/usr/share/ls2/services
+}
+
+###########################################
+#  Fetch and build pmnetconfigmanager-stub
+###########################################
+function build_pmnetconfigmanager-stub
+{
+    do_fetch openwebos/pmnetconfigmanager-stub $1 pmnetconfigmanager-stub submissions/
+
+    ##### To build from your local clone of pmnetconfigmanager-stub, change the following line to "cd" to your clone's location
+    cd $BASE/pmnetconfigmanager-stub
+    mkdir -p $ROOTFS/usr/palm/services/com.palm.connectionmanager
+    cp -rf *.json *.js $ROOTFS/usr/palm/services/com.palm.connectionmanager
+    cp -rf files/sysbus/*.json $ROOTFS/usr/share/ls2/roles/prv
+    cp -rf files/sysbus/*.json $ROOTFS/usr/share/ls2/roles/pub
+    #NOTE: services go in $ROOTFS/usr/share/ls2/system-services, which is linked from /usr/share/ls2/system-services
+    cp -rf desktop-support/*.service $ROOTFS/usr/share/ls2/system-services
+    cp -rf desktop-support/*.service $ROOTFS/usr/share/ls2/services
 }
 
 ###########################################
@@ -1307,9 +1342,11 @@ build foundation-frameworks 1.0
 build mojoservice-frameworks 1.0
 build loadable-frameworks 1.0.1
 build app-services 1.02
+build mojolocation-stub 2
+build pmnetconfigmanager-stub 2
 
 build underscore 8
-build mojoloader 4
+build mojoloader 8
 build mojoservicelauncher 70
 
 build WebKitSupplemental 0.4
