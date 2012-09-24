@@ -182,7 +182,7 @@ USR_LIB_DIR="${STAGING_DIR}/usr/lib"
 ETC_DIR="${STAGING_DIR}/etc"
 # NOTE: this links to ROOTFS/usr/lib/luna which is what the role and service files refer to
 SERVICE_BIN_DIR="/usr/lib/luna"
-STATIC_SERVICES="LunaSysService filecache activitymanager mojodb-luna luna-universalsearchmgr"
+STATIC_SERVICES="LunaSysService filecache activitymanager mojodb-luna LunaUniversalSearchMgr"
 
 # TODO: Consider moving ls2 dir to traditional locations (requires changes to scripts AND .conf files)
 CONF_DIR="${ROOTFS}/etc"
@@ -245,8 +245,8 @@ activitymanager)
 mojodb|mojodb-luna|db8)
   service_start mojodb-luna -c /etc/palm/mojodb.conf /var/db
   ;;
-luna-universalsearchmgr)
-  service_start luna-universalsearchmgr ;;
+LunaUniversalSearchMgr)
+  service_start LunaUniversalSearchMgr ;;
   
 send)
   luna-send "$@"
