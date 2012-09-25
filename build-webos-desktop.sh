@@ -239,7 +239,7 @@ function build_nyx-lib
 ######################
 function build_qt4
 {
-    do_fetch openwebos/qt $1 qt4
+    do_fetch openwebos/qt $1 qt4 submissions/
     export STAGING_DIR=${LUNA_STAGING}
     if [ ! -f $BASE/qt-build-desktop/Makefile ] || [ ! -e $BASE/qt4/luna-desktop-build-$1.stamp ] ; then
         rm -rf $BASE/qt-build-desktop
@@ -1310,7 +1310,7 @@ set -x
 #  export SKIPSTUFF=0
 #fi
 
-export LSM_TAG="0.905"
+export LSM_TAG="0.910"
 if [ ! -d "$BASE/luna-sysmgr" ] || [ ! -d "$BASE/tarballs" ] || [ ! -e "$BASE/tarballs/luna-sysmgr_${LSM_TAG}.zip" ] ; then
     do_fetch openwebos/luna-sysmgr ${LSM_TAG} luna-sysmgr
 fi
@@ -1331,7 +1331,7 @@ build pbnjson 2
 build pmloglib 21
 build nyx-lib 58
 build luna-service2 140
-build qt4 0.35
+build qt4 1.00
 build npapi-headers 0.4
 build luna-webkit-api 0.90
 build webkit 0.3
@@ -1375,7 +1375,7 @@ build node-addon sysbus 25
 build node-addon pmlog 10
 build node-addon dynaload 11
 
-build db8 55
+build db8 60
 build configurator 1.04
 
 build activitymanager 108
