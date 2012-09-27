@@ -26,4 +26,4 @@ BUILD*/
 release-*/
 debug-*/
 patches/
-
+*debuglog.txt

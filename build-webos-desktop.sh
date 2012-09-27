@@ -549,7 +549,7 @@ function build_luna-applauncher
 ###########################################
 function build_luna-systemui
 {
-    do_fetch openwebos/luna-systemui $1 luna-systemui
+    do_fetch openwebos/luna-systemui $1 luna-systemui submissions/
 
     ##### To build from your local clone of luna-systemui, change the following line to "cd" to your clone's location
     cd $BASE/luna-systemui
@@ -1310,7 +1310,7 @@ set -x
 #  export SKIPSTUFF=0
 #fi
 
-export LSM_TAG="0.910"
+export LSM_TAG="0.911"
 if [ ! -d "$BASE/luna-sysmgr" ] || [ ! -d "$BASE/tarballs" ] || [ ! -e "$BASE/tarballs/luna-sysmgr_${LSM_TAG}.zip" ] ; then
     do_fetch openwebos/luna-sysmgr ${LSM_TAG} luna-sysmgr
 fi
@@ -1348,7 +1348,7 @@ build librolegen 16
 build luna-universalsearchmgr 0.91
 
 build luna-applauncher 0.90
-build luna-systemui 0.90
+build luna-systemui 1.00
 
 build enyo-1.0 128.2
 build core-apps 1.0.5
