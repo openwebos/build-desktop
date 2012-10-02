@@ -23,8 +23,8 @@ if [ "$1" = "clean" ] ; then
   export SKIPSTUFF=0
   set -e
 elif [ "$1" = "--help" ] ; then
-    echo "Usage:  ./build-luna-sysmgr.sh [OPTION]"
-    echo "Builds the luna-sysmgr component and its dependencies."
+    echo "Usage:  ./build-webos-desktop.sh [OPTION]"
+    echo "Builds the webos-desktop system and its dependencies."
     echo "    The script loads about 500MB of source code from GitHub, as needed."
     echo "    NOTE: This script creates about 4GB of disk space"
     echo " "
