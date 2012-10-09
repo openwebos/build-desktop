@@ -342,6 +342,13 @@ function build_webkit
         Source/WebCore/platform/webos/LunaServiceMgr.cpp.prepatch
       patch --directory=Source/WebCore/platform/webos < ${BASE}/luna-sysmgr/desktop-support/webkit-PALM_SERVICE_BRIDGE.patch
     fi
+
+    # gcc 4.5.2 fails to compile WebCore module with "internal compiler error" when using -O2 or better
+    GCC_VERSION=$(gcc -v 2>&1 | tail -1 | awk '{print $3}')
+    if [ "$GCC_VERSION" == "4.5.2" ] ; then
+        sed -i 's/enable_fast_mobile_scrolling: DEFINES += ENABLE_FAST_MOBILE_SCROLLING=1/enable_fast_mobile_scrolling: DEFINES += ENABLE_FAST_MOBILE_SCROLLING=1\nQMAKE_CXXFLAGS_RELEASE-=-O2\nQMAKE_CXXFLAGS_RELEASE+=-O0\n/' Source/WebCore/WebCore.pri
+    fi
+
     export QTDIR=$BASE/qt4
     export QMAKE=$LUNA_STAGING/bin/qmake-palm
     export QMAKEPATH=$WEBKIT_DIR/Tools/qmake
@@ -351,7 +358,6 @@ function build_webkit
         --release \
         --no-video \
         --fullscreen-api \
-        --no-3d-canvas \
         --only-webkit \
         --no-webkit2 \
         --qmake="${QMAKE}" \
@@ -1334,7 +1340,7 @@ build luna-service2 140
 build qt4 1.00
 build npapi-headers 0.4
 build luna-webkit-api 0.90
-build webkit 0.3
+build webkit 0.54
 
 build luna-sysmgr-ipc 0.90
 build luna-sysmgr-ipc-messages 0.90
