@@ -17,29 +17,58 @@
 #
 # LICENSE@@@
 
-export VERSION=7.4
+VERSION=7.4
+
+PROCS=`grep -c processor /proc/cpuinfo`
+
+usage() {
+    cat <<EOF
+Usage:  ./build-webos-desktop.sh [OPTION]...
+Builds the version of Open webOS for the Desktop.
+    The script loads about 500MB of source code from GitHub, as needed.
+    NOTE: This script creates files which use about 4GB of disk space
+
+Optional arguments:
+    clean   force a rebuild of components
+    -j N, --jobs=N  run N simultaneous make jobs (default: ${PROCS})
+    --help  display this help and exit
+    --version  display version information and exit
+
+EOF
+}
+
+if ! ARGS=`getopt -o j: -l jobs:,help,version -n build-webos-desktop.sh -- "$@"` ; then
+    exit 2
+fi
+
+eval set -- "$ARGS"
+
+while true ; do
+    case "$1" in
+        -j|--jobs)
+            PROCS=$2
+            shift 2 ;;
+        --help)
+            usage
+            exit ;;
+        --version)
+            echo "Desktop build script for Open webOS #${VERSION}"
+            exit ;;
+        --)
+            shift
+            break ;;
+        *)
+            break ;;
+    esac
+done
 
 if [ "$1" = "clean" ] ; then
   export SKIPSTUFF=0
   set -e
-elif [ "$1" = "--help" ] ; then
-    echo "Usage:  ./build-webos-desktop.sh [OPTION]"
-    echo "Builds the version of Open webOS for the Desktop."
-    echo "    The script loads about 500MB of source code from GitHub, as needed."
-    echo "    NOTE: This script creates files which use about 4GB of disk space"
-    echo " "
-    echo "Optional arguments:"
-    echo "    clean   force a rebuild of components"
-    echo "    --help  display this help and exit"
-    echo "    --version  display version information and exit"
-    echo " "
-    exit
-elif [ "$1" = "--version" ] ; then
-    echo "Desktop build script for Open webOS #${VERSION}"
-    exit
+  shift
 elif  [ -n "$1" ] ; then
     echo "Parameter $1 not recognized"
-    exit
+    exit 1
 else
   export SKIPSTUFF=1
   set -e
@@ -67,7 +96,6 @@ else
   export CMAKE="cmake"
 fi
 
-PROCS=`grep -c processor /proc/cpuinfo`
 [ $PROCS -gt 1 ] && JOBS="-j${PROCS}"
 
 export WEBKIT_DIR="WebKit"
