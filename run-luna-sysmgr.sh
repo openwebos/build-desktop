@@ -55,7 +55,8 @@ elif [ ! -d ${STAGING_DIR} ]  || [ ! -x ${ROOTFS}/usr/lib/luna/LunaSysMgr ]; the
     exit
 fi
 
-export LD_PRELOAD=/lib/i386-linux-gnu/libSegFault.so
+DEB_BUILD_MULTIARCH=$(dpkg-architecture -qDEB_BUILD_MULTIARCH)
+export LD_PRELOAD=/lib/${DEB_BUILD_MULTIARCH}/libSegFault.so
 export LD_LIBRARY_PATH=${LIB_DIR}:${LD_LIBRARY_PATH}
 export PATH=${BIN_DIR}:${PATH}
 # Make Qt aware of this path (the qbsplugin is here)

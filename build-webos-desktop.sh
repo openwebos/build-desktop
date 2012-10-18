@@ -154,11 +154,15 @@ function build_cmake
     CMAKE_VER="2.8.7"
     mkdir -p $BASE/cmake
     cd $BASE/cmake
-    CMAKE_TARBALL="$BASE/tarballs/cmake-${CMAKE_VER}-Linux-i386.tar.gz"
+    CMAKE_TARBALL="$BASE/tarballs/cmake-${CMAKE_VER}.tar.gz"
     if [ ! -f "${CMAKE_TARBALL}" ] ; then
-        wget http://www.cmake.org/files/v2.8/cmake-${CMAKE_VER}-Linux-i386.tar.gz -O ${CMAKE_TARBALL}
+        wget http://www.cmake.org/files/v2.8/cmake-${CMAKE_VER}.tar.gz -O ${CMAKE_TARBALL}
     fi
     tar zxf ${CMAKE_TARBALL} --strip-components=1
+    cd $BASE/cmake
+    ./bootstrap --prefix=${BASE}/cmake
+    make
+    make install
     export CMAKE="${BASE}/cmake/bin/cmake"
 }
 

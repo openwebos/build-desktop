@@ -3,14 +3,16 @@ build-desktop
 
 The scripts in this repository are used to build, install, and run Open webOS on an Ubuntu Linux desktop computer.
 
-How to Build on Ubuntu Linux
-============================
+Supported platforms
+====================
 
-Note:  The scripts have been successfully tested on both Ubuntu _Desktop_ 11.04 and 12.04 on 32-bit machines.
+* Ubuntu Desktop 11.04 32-bit
+* Ubuntu Desktop 12.04 32-bit and 64-bit
 
 Note:  Builds on Ubuntu Server (or other non-desktop) installations are not currently supported (or working).
 
-Note:  Builds on 64-bit machines are not currently supported (or working).
+How to Build on Ubuntu Linux
+============================
 
 Prerequisites
 -------------

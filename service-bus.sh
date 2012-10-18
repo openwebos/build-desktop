@@ -198,7 +198,8 @@ fi
 SRC_DIR="${HOME}/luna-desktop-binaries/luna-sysmgr/desktop-support"
 #LOGGING="--pmloglib"
 
-export LD_PRELOAD=/lib/i386-linux-gnu/libSegFault.so
+DEB_BUILD_MULTIARCH=$(dpkg-architecture -qDEB_BUILD_MULTIARCH)
+export LD_PRELOAD=/lib/${DEB_BUILD_MULTIARCH}/libSegFault.so
 export LD_LIBRARY_PATH=${LIB_DIR}:${USR_LIB_DIR}:${LD_LIBRARY_PATH}
 export PATH=${SERVICE_BIN_DIR}:${BIN_DIR}:${PATH}
 
