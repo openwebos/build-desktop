@@ -17,16 +17,16 @@
 #
 # LICENSE@@@
 
-export VERSION=7.3
+export VERSION=7.4
 
 if [ "$1" = "clean" ] ; then
   export SKIPSTUFF=0
   set -e
 elif [ "$1" = "--help" ] ; then
-    echo "Usage:  ./build-luna-sysmgr.sh [OPTION]"
-    echo "Builds the luna-sysmgr component and its dependencies."
+    echo "Usage:  ./build-webos-desktop.sh [OPTION]"
+    echo "Builds the version of Open webOS for the Desktop."
     echo "    The script loads about 500MB of source code from GitHub, as needed."
-    echo "    NOTE: This script creates about 4GB of disk space"
+    echo "    NOTE: This script creates files which use about 4GB of disk space"
     echo " "
     echo "Optional arguments:"
     echo "    clean   force a rebuild of components"
@@ -305,6 +305,21 @@ function build_npapi-headers
     cp -f *.h $LUNA_STAGING/include/webkit/npapi
 }
 
+################################
+#  Fetch and build isis-fonts
+################################
+function build_isis-fonts
+{
+    do_fetch isis-project/isis-fonts $1 isis-fonts
+
+    ##### To build from your local clone of isis-fonts, change the following line to "cd" to your clone's location
+    cd $BASE/isis-fonts
+
+    mkdir -p $ROOTFS/usr/share/fonts
+    cp -f *.xml $ROOTFS/usr/share/fonts
+    cp -f *.ttf $ROOTFS/usr/share/fonts
+}
+
 ##################################
 #  Fetch and build luna-webkit-api
 ##################################
@@ -392,7 +407,7 @@ function build_webkit
 ##################################
 function build_luna-sysmgr-ipc
 {
-    do_fetch openwebos/luna-sysmgr-ipc $1 luna-sysmgr-ipc
+    do_fetch openwebos/luna-sysmgr-ipc $1 luna-sysmgr-ipc submissions/
 
     ##### To build from your local clone of luna-sysmgr-ipc, change the following line to "cd" to your clone's location
     cd $BASE/luna-sysmgr-ipc
@@ -405,7 +420,7 @@ function build_luna-sysmgr-ipc
 ###########################################
 function build_luna-sysmgr-ipc-messages
 {
-    do_fetch openwebos/luna-sysmgr-ipc-messages $1 luna-sysmgr-ipc-messages
+    do_fetch openwebos/luna-sysmgr-ipc-messages $1 luna-sysmgr-ipc-messages submissions/
 
      ##### To build from your local clone of luna-sysmgr-ipc-messages, change the following line to "cd" to your clone's location
     cd $BASE/luna-sysmgr-ipc-messages
@@ -445,15 +460,21 @@ function build_luna-prefs
 ################################# 
 function build_luna-init
 {
-    do_fetch openwebos/luna-init $1 luna-init versions/
+    do_fetch openwebos/luna-init $1 luna-init submissions/
 
     mkdir -p $BASE/luna-init/build
     cd $BASE/luna-init/build
     $CMAKE -D WEBOS_INSTALL_ROOT:PATH=${LUNA_STAGING} -DCMAKE_INSTALL_PREFIX=${LUNA_STAGING} ..
-  
+
     make $JOBS
     make install
     cp -f $BASE/luna-init/files/conf/*.json $ROOTFS/usr/palm/
+
+    if [ -e ../files/conf/fonts/fonts.tgz ]; then
+        mkdir -p $ROOTFS/usr/share/fonts
+        tar xvzf ../files/conf/fonts/fonts.tgz --directory=${ROOTFS}/usr/share/fonts
+        cp -f ../files/conf/fonts/*.xml $ROOTFS/usr/share/fonts/
+    fi
 }
 
 #################################
@@ -461,7 +482,7 @@ function build_luna-init
 ################################# 
 function build_luna-sysservice 
 {
-    do_fetch openwebos/luna-sysservice $1 luna-sysservice
+    do_fetch openwebos/luna-sysservice $1 luna-sysservice submissions/
 
     ##### To build from your local clone of luna-sysservice, change the following line to "cd" to your clone's location
     cd $BASE/luna-sysservice
@@ -519,13 +540,10 @@ function build_enyo-1.0
 ###########################################
 function build_core-apps
 {
-    do_fetch openwebos/core-apps $1 core-apps
+    do_fetch openwebos/core-apps $1 core-apps submissions/
 
     ##### To build from your local clone of core-apps, change the following line to "cd" to your clone's location
     cd $BASE/core-apps
-
-    # TODO: fix calculator appId:
-    sed -i 's/com.palm.calculator/com.palm.app.calculator/' com.palm.app.calculator/appinfo.json
 
     mkdir -p $ROOTFS/usr/palm/applications
     for APP in com.palm.app.* ; do
@@ -562,6 +580,10 @@ function build_luna-systemui
 
     mkdir -p $ROOTFS/usr/lib/luna/system/luna-systemui
     cp -rf . $ROOTFS/usr/lib/luna/system/luna-systemui
+    if [ -e images/wallpaper.tar ]; then
+        mkdir -p $ROOTFS/usr/lib/luna/system/luna-systemui/images
+        tar xf images/wallpaper.tar --directory=${ROOTFS}/usr/lib/luna/system/luna-systemui/images
+    fi
 }
 
 ###########################################
@@ -747,7 +769,7 @@ function build_mojomail
 
     # TODO: (cmake should do this) install filecache types
     mkdir -p $ROOTFS/etc/palm/filecache_types
-    cp -rf $BASE/mojomail/common/files/etc/palm/filecache_types/* $ROOTFS/etc/palm/filecache_types
+    cp -rf $BASE/mojomail/common/files/filecache_types/* $ROOTFS/etc/palm/filecache_types
 
     # NOTE: Make binaries findable in /usr/lib/luna so ls2 can match the role file
     cd $BASE/mojomail
@@ -1185,7 +1207,7 @@ function build_serviceinstaller
 ###########################
 function build_luna-universalsearchmgr
 {
-    do_fetch openwebos/luna-universalsearchmgr $1 luna-universalsearchmgr
+    do_fetch openwebos/luna-universalsearchmgr $1 luna-universalsearchmgr submissions/
     
     ##### To build from your local clone of luna-universalsearchmgr, change the following line to "cd" to your clone's location
     cd $BASE/luna-universalsearchmgr
@@ -1316,7 +1338,7 @@ set -x
 #  export SKIPSTUFF=0
 #fi
 
-export LSM_TAG="0.911"
+export LSM_TAG="0.930"
 if [ ! -d "$BASE/luna-sysmgr" ] || [ ! -d "$BASE/tarballs" ] || [ ! -e "$BASE/tarballs/luna-sysmgr_${LSM_TAG}.zip" ] ; then
     do_fetch openwebos/luna-sysmgr ${LSM_TAG} luna-sysmgr
 fi
@@ -1337,28 +1359,29 @@ build pbnjson 2
 build pmloglib 21
 build nyx-lib 58
 build luna-service2 140
-build qt4 1.00
+build qt4 1.01
 build npapi-headers 0.4
 build luna-webkit-api 0.90
 build webkit 0.54
 
-build luna-sysmgr-ipc 0.90
-build luna-sysmgr-ipc-messages 0.90
+build luna-sysmgr-ipc 1.00
+build luna-sysmgr-ipc-messages 1.00
 build luna-sysmgr $LSM_TAG
 
-build luna-init 2.0.0
-build luna-prefs 0.91
-build luna-sysservice 0.92
+build luna-init 1.04
+build luna-prefs 0.95
+build luna-sysservice 1.02
 build librolegen 16
 ##build serviceinstaller 0.90
-build luna-universalsearchmgr 0.91
+build luna-universalsearchmgr 1.00
 
 build luna-applauncher 0.90
-build luna-systemui 1.00
+build luna-systemui 1.01
 
 build enyo-1.0 128.2
-build core-apps 1.0.5
+build core-apps 2
 build isis-browser 0.21
+build isis-fonts v0.1
 
 build foundation-frameworks 1.0
 build mojoservice-frameworks 1.0
@@ -1381,7 +1404,7 @@ build node-addon sysbus 25
 build node-addon pmlog 10
 build node-addon dynaload 11
 
-build db8 60
+build db8 61.1
 build configurator 1.04
 
 build activitymanager 108
@@ -1391,8 +1414,8 @@ build libsandbox 15
 build jemalloc 11
 build filecache 54
 
-#NOTE: mojomail depends on libsandbox, libpalmsocket, and pmstatemachine; 
-build mojomail 96 
+#NOTE: mojomail depends on libsandbox, libpalmsocket, and pmstatemachine;
+build mojomail 99
 
 echo ""
 echo "Complete. "
