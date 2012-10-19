@@ -426,8 +426,8 @@ function build_luna-sysmgr-ipc-messages
     cd $BASE/luna-sysmgr-ipc-messages
 
     if [ -d include/public/messages ] ; then
-        mkdir -p $LUNA_STAGING/include/sysmgr_ipc
-        cp -f include/public/messages/*.h $LUNA_STAGING/include/sysmgr_ipc
+        mkdir -p $LUNA_STAGING/include/sysmgr-ipc
+        cp -f include/public/messages/*.h $LUNA_STAGING/include/sysmgr-ipc
     else
         make -e PREFIX=$LUNA_STAGING -f Makefile.Ubuntu install BUILD_TYPE=release
     fi
