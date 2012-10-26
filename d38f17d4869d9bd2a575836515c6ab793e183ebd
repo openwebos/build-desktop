@@ -1,0 +1,10 @@
+Code-Review+1: Herb Kuta <herb.kuta@palm.com>
+Code-Review+2: Steve Lemke <steve.lemke@palm.com>
+Code-Review+1: Build Verification
+Code-Review+1: Antti Harju <antti.harju@palm.com>
+Verified+1: Antti Harju <antti.harju@palm.com>
+Submitted-by: Steve Lemke <steve.lemke@palm.com>
+Submitted-at: Fri, 26 Oct 2012 15:40:54 -0700
+Reviewed-on: http://g2g.palm.com/794
+Project: build-desktop
+Branch: refs/heads/master
