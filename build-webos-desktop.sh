@@ -17,7 +17,7 @@
 #
 # LICENSE@@@
 
-VERSION=7.4
+VERSION=7.5
 
 PROCS=`grep -c processor /proc/cpuinfo`
 
@@ -470,7 +470,7 @@ function build_luna-sysmgr-ipc-messages
 ################################# 
 function build_luna-prefs
 {
-    do_fetch openwebos/luna-prefs $1 luna-prefs
+    do_fetch openwebos/luna-prefs $1 luna-prefs submissions/
 
     ##### To build from your local clone of luna-prefs, change the following line to "cd" to your clone's location
     cd $BASE/luna-prefs
@@ -822,7 +822,7 @@ function build_mojomail
 function build_luna-sysmgr
 {
     if [ ! -d $BASE/luna-sysmgr ]  || [ ! -e "$BASE/tarballs/luna-sysmgr_${1}.zip" ] ; then
-        do_fetch openwebos/luna-sysmgr $1 luna-sysmgr
+        do_fetch openwebos/luna-sysmgr $1 luna-sysmgr submissions/
     fi
 
     ##### To build from your local clone of luna-sysmgr, change the following line to "cd" to your clone's location
@@ -1222,7 +1222,7 @@ function build_librolegen
 ###########################
 function build_serviceinstaller
 {
-    do_fetch openwebos/serviceinstaller $1 serviceinstaller
+    do_fetch openwebos/serviceinstaller $1 serviceinstaller submissions/
     
     ##### To build from your local clone of serviceinstaller, change the following line to "cd" to your clone's location
     cd $BASE/serviceinstaller
@@ -1370,16 +1370,12 @@ set -x
 #  export SKIPSTUFF=0
 #fi
 
-export LSM_TAG="0.930"
+export LSM_TAG="1.00"
 if [ ! -d "$BASE/luna-sysmgr" ] || [ ! -d "$BASE/tarballs" ] || [ ! -e "$BASE/tarballs/luna-sysmgr_${LSM_TAG}.zip" ] ; then
-    do_fetch openwebos/luna-sysmgr ${LSM_TAG} luna-sysmgr
+    do_fetch openwebos/luna-sysmgr ${LSM_TAG} luna-sysmgr submissions/
 fi
 if [ -d $BASE/luna-sysmgr ] ; then
     rm -f $BASE/luna-sysmgr/luna-desktop-build*.stamp
-fi
-if [ ! -e $BASE/build_version_$VERSION ] && [ -d $BASE/luna-universalsearchmgr ] ; then
-    ## must force rebuild until version increments from 0.91
-    rm -f $BASE/luna-universalsearchmgr/luna-desktop-build*.stamp
 fi
 
 # Build a local version of cmake 2.8.7 so that cmake-modules-webos doesn't have to write to the OS-supplied CMake modules directory
@@ -1396,15 +1392,15 @@ build npapi-headers 0.4
 build luna-webkit-api 0.90
 build webkit 0.54
 
-build luna-sysmgr-ipc 1.00
+build luna-sysmgr-ipc 1.01
 build luna-sysmgr-ipc-messages 1.00
 build luna-sysmgr $LSM_TAG
 
 build luna-init 1.04
-build luna-prefs 0.95
-build luna-sysservice 1.02
+build luna-prefs 1.00
+build luna-sysservice 1.03
 build librolegen 16
-##build serviceinstaller 0.90
+##build serviceinstaller 1.01
 build luna-universalsearchmgr 1.00
 
 build luna-applauncher 0.90
