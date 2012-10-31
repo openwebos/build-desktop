@@ -902,7 +902,22 @@ function build_luna-sysmgr
     cp -frad low-memory/* $ROOTFS/usr/palm/sysmgr/low-memory
     mkdir -p $ROOTFS/usr/palm/sysmgr/uiComponents
     cp -frad uiComponents/* $ROOTFS/usr/palm/sysmgr/uiComponents
+}
 
+
+##############################
+#  Fetch and build keyboard-efigs
+##############################
+function build_keyboard-efigs
+{
+    do_fetch openwebos/keyboard-efigs $1 keyboard-efigs submissions/
+
+    ##### To build from your local clone of keyboard-efigs, change the following line to "cd" to your clone's location
+    cd $BASE/keyboard-efigs
+
+    $LUNA_STAGING/bin/qmake-palm
+    make $JOBS -f Makefile.Ubuntu
+    make -f Makefile.Ubuntu install
 }
 
 #####################################
@@ -1395,6 +1410,7 @@ build webkit 0.54
 build luna-sysmgr-ipc 1.01
 build luna-sysmgr-ipc-messages 1.00
 build luna-sysmgr $LSM_TAG
+build keyboard-efigs 0.91
 
 build luna-init 1.04
 build luna-prefs 1.00
