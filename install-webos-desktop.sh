@@ -119,6 +119,7 @@ if [ -d /etc/palm ] ; then
     do_remove_folder /usr/palm
     do_remove_folder /var/palm
     do_remove_folder /var/luna
+    do_remove_folder /var/db
     do_remove_folder /usr/lib/luna
     do_remove_folder /usr/lib/BrowserPlugins 
     do_remove_folder /usr/lib/BrowserServerPlugin
