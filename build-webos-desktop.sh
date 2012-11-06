@@ -126,7 +126,7 @@ do_fetch() {
 
     if [ "$1" = "isis-project/WebKit" ] ; then
         GIT_SOURCE=https://github.com/downloads/isis-project/WebKit/WebKit_${2}s.zip
-    elif [ -n “${GITHUB_USER}” ]; then
+    elif [ -n "${GITHUB_USER}" ]; then
         GIT_SOURCE=https://${GITHUB_USER}:${GITHUB_PASS}@github.com/${1}/zipball/${GIT_BRANCH}
     else
         GIT_SOURCE=https://github.com/${1}/zipball/${GIT_BRANCH}
