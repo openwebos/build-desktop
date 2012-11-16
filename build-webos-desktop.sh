@@ -785,7 +785,9 @@ function build_app-services
 function build_mojomail
 {
     do_fetch openwebos/mojomail $1 mojomail submissions/
+    ##### To build from your local clone of mojomail, change the following line to "cd" to your clone's location
     cd $BASE/mojomail
+
     for SUBDIR in common imap pop smtp ; do
       mkdir -p $BASE/mojomail/$SUBDIR/build
       cd $BASE/mojomail/$SUBDIR/build
@@ -797,17 +799,17 @@ function build_mojomail
       mkdir -p $ROOTFS/usr/palm/public/accounts
       cp -rf ../files/usr/palm/public/accounts/* $ROOTFS/usr/palm/public/accounts/ 2>/dev/null || true
       cp -rf ../files/db8/kinds/* $ROOTFS/etc/palm/db/kinds 2> /dev/null || true
+      cd ../..
     done
 
     # TODO: (cmake should do this) install filecache types
     mkdir -p $ROOTFS/etc/palm/filecache_types
-    cp -rf $BASE/mojomail/common/files/filecache_types/* $ROOTFS/etc/palm/filecache_types
+    cp -rf common/files/filecache_types/* $ROOTFS/etc/palm/filecache_types
 
     # NOTE: Make binaries findable in /usr/lib/luna so ls2 can match the role file
-    cd $BASE/mojomail
-    cp imap/build/mojomail-imap "${ROOTFS}/usr/lib/luna/"
-    cp pop/build/mojomail-pop "${ROOTFS}/usr/lib/luna/"
-    cp smtp/build/mojomail-smtp "${ROOTFS}/usr/lib/luna/"
+    cp -f imap/build/mojomail-imap "${ROOTFS}/usr/lib/luna/"
+    cp -f pop/build/mojomail-pop "${ROOTFS}/usr/lib/luna/"
+    cp -f smtp/build/mojomail-smtp "${ROOTFS}/usr/lib/luna/"
     cp -f desktop-support/com.palm.imap.json.prv $ROOTFS/usr/share/ls2/roles/prv/com.palm.imap.json
     cp -f desktop-support/com.palm.pop.json.prv $ROOTFS/usr/share/ls2/roles/prv/com.palm.pop.json
     cp -f desktop-support/com.palm.smtp.json.prv $ROOTFS/usr/share/ls2/roles/prv/com.palm.smtp.json
@@ -1015,7 +1017,7 @@ function build_BrowserAdapter
 {
     do_fetch isis-project/BrowserAdapter $1 BrowserAdapter
 
-    ##### To build from your local clone of db8, change the following line to "cd" to your clone's location
+    ##### To build from your local clone of BrowserAdapter, change the following line to "cd" to your clone's location
     cd $BASE/BrowserAdapter
 
     export QT_INSTALL_PREFIX=$LUNA_STAGING
@@ -1095,16 +1097,15 @@ function build_db8
     ##### To build from your local clone of db8, change the following line to "cd" to your clone's location
     cd $BASE/db8
 
-    make $JOBS -e PREFIX=$LUNA_STAGING -f Makefile.Ubuntu install BUILD_TYPE=release
-    # NOTE: Make binary findable in /usr/lib/luna so ls2 can match the role file
-    cp -f release-linux-x86/mojodb-luna "${ROOTFS}/usr/lib/luna/"
-    # TODO: remove after switching to cmake
-    cp -f desktop-support/com.palm.db.json.pub $ROOTFS/usr/share/ls2/roles/pub/com.palm.db.json
-    cp -f desktop-support/com.palm.db.json.prv $ROOTFS/usr/share/ls2/roles/prv/com.palm.db.json
-    cp -f desktop-support/com.palm.db.service $ROOTFS/usr/share/ls2/services/com.palm.db.service
-    cp -f desktop-support/com.palm.db.service $ROOTFS/usr/share/ls2/system-services/com.palm.db.service
-    cp -f desktop-support/com.palm.tempdb.service $ROOTFS/usr/share/ls2/system-services/com.palm.tempdb.service
-    cp -f src/db-luna/mojodb.conf $ROOTFS/etc/palm/mojodb.conf
+    mkdir -p build
+    cd build
+
+    # db8 needs luna-service2, which needs cjson, and we need -rpath-link to locate that properly
+    export LDFLAGS="-Wl,-rpath-link $LUNA_STAGING/lib"
+
+    $CMAKE .. -D WEBOS_INSTALL_ROOT:PATH=${LUNA_STAGING} -DCMAKE_INSTALL_PREFIX=${LUNA_STAGING} ..
+    make $JOBS
+    make install
 }
 
 ##############################
@@ -1112,13 +1113,14 @@ function build_db8
 ##############################
 function build_configurator
 {
-    do_fetch openwebos/configurator $1 configurator
+    do_fetch openwebos/configurator $1 configurator submissions/
 
     ##### To build from your local clone of configurator, change the following line to "cd" to your clone's location
     cd $BASE/configurator
 
     mkdir -p build
     cd build
+    export LDFLAGS="-Wl,-rpath-link $LUNA_STAGING/lib"
     $CMAKE -D WEBOS_INSTALL_ROOT:PATH=${LUNA_STAGING} -DCMAKE_INSTALL_PREFIX=${LUNA_STAGING} ..
     make $JOBS
     make install
@@ -1140,8 +1142,6 @@ function build_activitymanager
 
     mkdir -p build
     cd build
-    #TODO: Remove this when db8 gets a pkgconfig file...
-    sed -i "s!/include/mojodb!${LUNA_STAGING}/include/mojodb!" ../CMakeLists.txt
     $CMAKE -D WEBOS_INSTALL_ROOT:PATH=${LUNA_STAGING} -DCMAKE_INSTALL_PREFIX=${LUNA_STAGING} ..
     make $JOBS
     make install
@@ -1283,6 +1283,7 @@ function build_filecache
     do_fetch openwebos/filecache $1 filecache submissions/
     mkdir -p $BASE/filecache/build
     cd $BASE/filecache/build
+    export LDFLAGS="-Wl,-rpath-link $LUNA_STAGING/lib"
     $CMAKE -D WEBOS_INSTALL_ROOT:PATH=${LUNA_STAGING} -DCMAKE_INSTALL_PREFIX=${LUNA_STAGING} ..
     make $JOBS
     make install
@@ -1449,14 +1450,14 @@ build node-addon pmlog 10
 build node-addon dynaload 11
 
 build db8 61.1
-build configurator 1.04
+build configurator 49
 
-build activitymanager 108
+build activitymanager 110
 build pmstatemachineengine 13
 build libpalmsocket 30
 build libsandbox 15
 build jemalloc 11
-build filecache 54
+build filecache 55
 
 #NOTE: mojomail depends on libsandbox, libpalmsocket, and pmstatemachine;
 build mojomail 99
