@@ -1394,6 +1394,13 @@ if [ -d $BASE/luna-sysmgr ] ; then
     rm -f $BASE/luna-sysmgr/luna-desktop-build*.stamp
 fi
 
+## TODO: Remove this temporary fix once db8 incremented past 61.1 
+if [ ! -d "$BASE/configurator" ] || [ ! -e "$BASE/configurator/luna-desktop-build-49.stamp" ] ; then
+    if [ -d "$BASE/db8" ] && [ -e "$BASE/db8/luna-desktop-build-61.1.stamp" ] ; then
+        rm -f $BASE/db8/luna-desktop-build-61.1.stamp
+    fi
+fi
+
 # Build a local version of cmake 2.8.7 so that cmake-modules-webos doesn't have to write to the OS-supplied CMake modules directory
 build cmake
 build cmake-modules-webos 9
