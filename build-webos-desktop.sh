@@ -1143,7 +1143,7 @@ function build_activitymanager
     mkdir -p build
     cd build
     $CMAKE -D WEBOS_INSTALL_ROOT:PATH=${LUNA_STAGING} -DCMAKE_INSTALL_PREFIX=${LUNA_STAGING} ..
-    make $JOBS
+    LDFLAGS="-Wl,-rpath-link $LUNA_STAGING/lib" make $JOBS
     make install
     # NOTE: Make binary findable in /usr/lib/luna so ls2 can match the role file
     cp -f activitymanager "${ROOTFS}/usr/lib/luna/"
