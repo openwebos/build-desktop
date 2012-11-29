@@ -1106,6 +1106,17 @@ function build_db8
     $CMAKE .. -D WEBOS_INSTALL_ROOT:PATH=${LUNA_STAGING} -DCMAKE_INSTALL_PREFIX=${LUNA_STAGING} ..
     make $JOBS
     make install
+
+    # The (cmake) "make install" (above) installs headers/libs (and everything else) into LUNA_STAGING.
+    # Here, we install the executable and (desktop) ls2 files into $ROOTFS:
+    cd $BASE/db8
+    cp -f build/mojodb-luna "${ROOTFS}/usr/lib/luna/"
+    cp -f desktop-support/com.palm.db.json.pub $ROOTFS/usr/share/ls2/roles/pub/com.palm.db.json
+    cp -f desktop-support/com.palm.db.json.prv $ROOTFS/usr/share/ls2/roles/prv/com.palm.db.json
+    cp -f desktop-support/com.palm.db.service $ROOTFS/usr/share/ls2/services/com.palm.db.service
+    cp -f desktop-support/com.palm.db.service $ROOTFS/usr/share/ls2/system-services/com.palm.db.service
+    cp -f desktop-support/com.palm.tempdb.service $ROOTFS/usr/share/ls2/system-services/com.palm.tempdb.service
+    cp -f src/db-luna/mojodb.conf $ROOTFS/etc/palm/mojodb.conf
 }
 
 ##############################
