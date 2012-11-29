@@ -70,17 +70,24 @@ if [ -d /etc/palm ] && [ -h /etc/palm ] ; then
 
     mkdir -p /tmp/webos
     echo "Starting BrowserServer ..."
-    # Start the broser server
+    # Start the browser server
     ${BIN_DIR}/BrowserServer > /tmp/webos/BrowserServer.log &
 
     echo "Starting LunaSysMgr ..."
     export QT_QPA_PLATFORM=xcb
     cd ${ROOTFS}
     if [ -n "${REDIRECT}" ] ; then
-        ./usr/lib/luna/LunaSysMgr &> /tmp/webos/LunaSysMgr.log
+        ./usr/lib/luna/LunaSysMgr > /tmp/webos/LunaSysMgr.log &
     else
-        ./usr/lib/luna/LunaSysMgr
+        ./usr/lib/luna/LunaSysMgr &
     fi
+    sleep 2
+    if [ -n "${REDIRECT}" ] ; then
+        ./usr/lib/luna/WebAppMgr > /tmp/webos/WebappMgr.log
+
+    else
+        ./usr/lib/luna/WebAppMgr
+fi
 else
     echo "First run the install script:  sudo ./install-luna-sysmgr.sh"
 fi

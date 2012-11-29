@@ -826,6 +826,35 @@ function build_mojomail
 }
 
 ##############################
+#  Fetch and build webappmanager
+##############################
+function build_webappmanager
+{
+    do_fetch openwebos/webappmanager $1 webappmanager submissions/
+
+##### To build from your local clone of webappmgr, change the following line to "cd" to your clone's location
+    cd $BASE/webappmanager
+
+    if [ ! -e "luna-desktop-build-${1}.stamp" ] ; then
+        if [ $SKIPSTUFF -eq 0 ] && [ -e debug-x86 ] && [ -e debug-x86/.obj ] ; then
+            rm -f debug-x86/WebAppMgr
+            rm -rf debug-x86/.obj/*
+            rm -rf debug-x86/.moc/moc_*.cpp
+            rm -rf debug-x86/.moc/*.moc
+        fi
+        $LUNA_STAGING/bin/qmake-palm
+    fi
+    make $JOBS -f Makefile.Ubuntu
+    mkdir -p $ROOTFS/usr/lib/luna
+    cp -f debug-x86/WebAppMgr $ROOTFS/usr/lib/luna/WebAppMgr
+
+    cp -f desktop-support/com.palm.webappmgr.json.prv $ROOTFS/usr/share/ls2/roles/prv/com.palm.webappmgr.json
+    cp -f desktop-support/com.palm.webappmgr.json.pub $ROOTFS/usr/share/ls2/roles/pub/com.palm.webappmgr.json
+    cp -f desktop-support/com.palm.webappmgr.service.prv $ROOTFS/usr/share/ls2/system-services/com.palm.webappmgr.service
+    cp -f desktop-support/com.palm.webappmgr.service.pub $ROOTFS/usr/share/ls2/services/com.palm.webappmgr.service
+}
+
+##############################
 #  Fetch and build luna-sysmgr
 ##############################
 function build_luna-sysmgr
@@ -1434,6 +1463,8 @@ build luna-sysmgr-ipc 1.01
 build luna-sysmgr-ipc-messages 1.01
 build luna-sysmgr $LSM_TAG
 build keyboard-efigs 1.01
+
+build webappmanager 0.90
 
 build luna-init 1.04
 build luna-prefs 1.00
