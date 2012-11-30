@@ -1397,7 +1397,7 @@ set -x
 #  export SKIPSTUFF=0
 #fi
 
-export LSM_TAG="1.00"
+export LSM_TAG="1.01"
 if [ ! -d "$BASE/luna-sysmgr" ] || [ ! -d "$BASE/tarballs" ] || [ ! -e "$BASE/tarballs/luna-sysmgr_${LSM_TAG}.zip" ] ; then
     do_fetch openwebos/luna-sysmgr ${LSM_TAG} luna-sysmgr submissions/
 fi
@@ -1427,7 +1427,7 @@ build luna-webkit-api 0.90
 build webkit 0.54
 
 build luna-sysmgr-ipc 1.01
-build luna-sysmgr-ipc-messages 1.00
+build luna-sysmgr-ipc-messages 1.01
 build luna-sysmgr $LSM_TAG
 build keyboard-efigs 0.91
 
