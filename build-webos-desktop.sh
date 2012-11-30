@@ -1153,8 +1153,9 @@ function build_activitymanager
 
     mkdir -p build
     cd build
+    export LDFLAGS="-Wl,-rpath-link $LUNA_STAGING/lib"
     $CMAKE -D WEBOS_INSTALL_ROOT:PATH=${LUNA_STAGING} -DCMAKE_INSTALL_PREFIX=${LUNA_STAGING} ..
-    LDFLAGS="-Wl,-rpath-link $LUNA_STAGING/lib" make $JOBS
+    make $JOBS
     make install
     # NOTE: Make binary findable in /usr/lib/luna so ls2 can match the role file
     cp -f activitymanager "${ROOTFS}/usr/lib/luna/"
@@ -1163,8 +1164,8 @@ function build_activitymanager
     cp -f ../desktop-support/com.palm.activitymanager.service.pub $ROOTFS/usr/share/ls2/services/com.palm.activitymanager.service
     cp -f ../desktop-support/com.palm.activitymanager.service.prv $ROOTFS/usr/share/ls2/system-services/com.palm.activitymanager.service
     # Copy db8 files 
-      cp -rf ../files/db8/kinds/* $ROOTFS/etc/palm/db/kinds/ 2>/dev/null || true
-      cp -rf ../files/db8/permissions/* $ROOTFS/etc/palm/db/permissions/ 2>/dev/null || true
+    cp -rf ../files/db8/kinds/* $ROOTFS/etc/palm/db/kinds/ 2>/dev/null || true
+    cp -rf ../files/db8/permissions/* $ROOTFS/etc/palm/db/permissions/ 2>/dev/null || true
 }
 
 #######################################
