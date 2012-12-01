@@ -1445,7 +1445,7 @@ build webkit 0.54
 build luna-sysmgr-ipc 1.01
 build luna-sysmgr-ipc-messages 1.01
 build luna-sysmgr $LSM_TAG
-build keyboard-efigs 0.91
+build keyboard-efigs 0.92
 
 build luna-init 1.04
 build luna-prefs 1.00
