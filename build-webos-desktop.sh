@@ -834,6 +834,31 @@ function build_mojomail
 }
 
 ##############################
+#  Fetch and build luna-sysmgr-common
+##############################
+function build_luna-sysmgr-common
+{
+    do_fetch openwebos/luna-sysmgr-common $1 luna-sysmgr-common submissions/
+
+    ##### To build from your local clone of luna-sysmgr, change the following line to "cd" to your clone's location
+    cd $BASE/luna-sysmgr-common
+
+    if [ ! -e "luna-desktop-build-${1}.stamp" ] ; then
+        if [ $SKIPSTUFF -eq 0 ] && [ -e debug-x86 ] && [ -e debug-x86/.obj ] ; then
+            rm -f debug-x86/libLunaSysMgrCommon.so
+            rm -rf debug-x86/.obj/*
+            rm -rf debug-x86/.moc/moc_*.cpp
+            rm -rf debug-x86/.moc/*.moc
+        fi
+        export STAGING_LIBDIR="${LUNA_STAGING}/lib"
+        $LUNA_STAGING/bin/qmake-palm
+        make -e PREFIX=$LUNA_STAGING -f Makefile.Ubuntu install BUILD_TYPE=debug
+    fi
+}
+
+
+
+##############################
 #  Fetch and build webappmanager
 ##############################
 function build_webappmanager
@@ -1473,10 +1498,11 @@ build webkit 0.54
 
 build luna-sysmgr-ipc 1.01
 build luna-sysmgr-ipc-messages 1.01
+build luna-sysmgr-common 0.90
 build luna-sysmgr $LSM_TAG
 build keyboard-efigs 1.00
 
-build webappmanager 0.90
+build webappmanager 0.92
 
 build luna-init 1.04
 build luna-prefs 1.00
