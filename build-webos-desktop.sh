@@ -174,23 +174,38 @@ do_fetch() {
     popd
 }
 
-########################
-#  Fetch and build cmake
-########################
+####################################
+#  Fetch and unpack (or build) cmake
+####################################
 function build_cmake
 {
     CMAKE_VER="2.8.7"
     mkdir -p $BASE/cmake
     cd $BASE/cmake
-    CMAKE_TARBALL="$BASE/tarballs/cmake-${CMAKE_VER}.tar.gz"
-    if [ ! -f "${CMAKE_TARBALL}" ] ; then
-        wget http://www.cmake.org/files/v2.8/cmake-${CMAKE_VER}.tar.gz -O ${CMAKE_TARBALL}
+    CMAKE_MACHINE="Linux-`uname -i`"
+    CMAKE_TARBALL="$BASE/tarballs/cmake-${CMAKE_VER}-${CMAKE_MACHINE}.tar.gz"
+    CMAKE_SRCBALL="$BASE/tarballs/cmake-${CMAKE_VER}.tar.gz"
+    if [ ! -f "${CMAKE_TARBALL}" ] && [ ! -f "${CMAKE_SRCBALL}" ] ; then
+        wget http://www.cmake.org/files/v2.8/cmake-${CMAKE_VER}-${CMAKE_MACHINE}.tar.gz -O ${CMAKE_TARBALL} || true
+        if [ ! -s ${CMAKE_TARBALL} ] ; then
+            # no pre-built binary for this machine (e.g. amd64); force source build
+            rm -f ${CMAKE_TARBALL}
+        fi
     fi
-    tar zxf ${CMAKE_TARBALL} --strip-components=1
-    cd $BASE/cmake
-    ./bootstrap --prefix=${BASE}/cmake
-    make
-    make install
+    if [ -f "${CMAKE_TARBALL}" ] ; then
+        # got pre-built binary (e.g. i386) so unpack it
+        tar zxf ${CMAKE_TARBALL} --strip-components=1
+    else
+        if [ ! -f "${CMAKE_SRCBALL}" ] ; then
+            wget http://www.cmake.org/files/v2.8/cmake-${CMAKE_VER}.tar.gz -O ${CMAKE_SRCBALL}
+        fi
+        # no pre-built binary for this machine; build from source instead
+        tar zxf ${CMAKE_SRCBALL} --strip-components=1
+        cd $BASE/cmake
+        ./bootstrap --prefix=${BASE}/cmake
+        make
+        make install
+    fi
     export CMAKE="${BASE}/cmake/bin/cmake"
 }
 
