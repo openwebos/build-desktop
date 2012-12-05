@@ -1452,7 +1452,7 @@ build mojoservice-frameworks 1.0
 build loadable-frameworks 1.0.1
 build app-services 1.02
 build mojolocation-stub 2
-build pmnetconfigmanager-stub 2
+build pmnetconfigmanager-stub 3
 
 build underscore 8
 build mojoloader 8
