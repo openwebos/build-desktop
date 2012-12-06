@@ -249,11 +249,9 @@ function build_pbnjson
     do_fetch openwebos/libpbnjson $1 pbnjson submissions/
     mkdir -p $BASE/pbnjson/build
     cd $BASE/pbnjson/build
-    sed -i 's/set(EXTERNAL_YAJL TRUE)/set(EXTERNAL_YAJL FALSE)/' ../src/CMakeLists.txt
-    sed -i 's/add_subdirectory(pjson_engine\//add_subdirectory(deps\//' ../src/CMakeLists.txt
-    sed -i 's/-Werror//' ../src/CMakeLists.txt
-    $CMAKE ../src -DCMAKE_FIND_ROOT_PATH=${LUNA_STAGING} -DYAJL_INSTALL_DIR=${LUNA_STAGING} -DWITH_TESTS=False -DWITH_DOCS=False -DCMAKE_INSTALL_PREFIX=${LUNA_STAGING} -DCMAKE_BUILD_TYPE=Release
-    make $JOBS install
+    $CMAKE -D WEBOS_INSTALL_ROOT:PATH=${LUNA_STAGING} ..
+    make $JOBS
+    make install
 }
 
 ###########################
@@ -535,38 +533,23 @@ function build_luna-sysservice
     ##### To build from your local clone of luna-sysservice, change the following line to "cd" to your clone's location
     cd $BASE/luna-sysservice
 
-    #TODO: Switch to cmake build (after pbnjson + cmake)
-    #mkdir -p build
-    #cd build
-    #sed -i 's/REQUIRED uriparser/REQUIRED liburiparser/' ../CMakeLists.txt
-    #PKG_CONFIG_PATH=$LUNA_STAGING/lib/pkgconfig \
-    #$CMAKE .. -DCMAKE_INSTALL_PREFIX=${LUNA_STAGING} -DCMAKE_BUILD_TYPE=Release
-    #$CMAKE -D WEBOS_INSTALL_ROOT:PATH=${LUNA_STAGING} -DCMAKE_INSTALL_PREFIX=${LUNA_STAGING} ..
-    #make $JOBS
-    #make install
+    mkdir -p build
+    cd build
+    $CMAKE -D WEBOS_INSTALL_ROOT:PATH=${LUNA_STAGING} ..
+    make $JOBS
+    make install
 
-    # TODO: luna-sysservice generates a few warnings which will kill the build if we don't turn off -Werror
-    sed -i 's/-Werror//' Makefile.inc
-    #sed -i 's/#include "json_utils.h"//' Src/ImageServices.cpp
-    # link fails without -rpath-link to help libpbnjson_cpp.so find libpbnjson_c.so
-    export LDFLAGS="-Wl,-rpath-link $LUNA_STAGING/lib"
-    make $JOBS -f Makefile.Ubuntu
-
-    #cp debug-x86/LunaSysService $LUNA_STAGING/bin
     # NOTE: Make binary findable in /usr/lib/luna so ls2 can match the role file
-    cp -f debug-x86/LunaSysService $ROOTFS/usr/lib/luna/
-    # ls-control is used by serviceinstaller
-    #chmod ugo+x ../desktop-support/ls-control
-    #cp -f ../desktop-support/ls-control $ROOTFS/usr/lib/luna/
+    cp -f LunaSysService $ROOTFS/usr/lib/luna/
 
-    # TODO: cmake should do this for us (after we switch)
-    cp -rf files/conf/* ${ROOTFS}/etc/palm
-    cp -f desktop-support/com.palm.systemservice.json.pub $ROOTFS/usr/share/ls2/roles/pub/com.palm.systemservice.json
-    cp -f desktop-support/com.palm.systemservice.json.prv $ROOTFS/usr/share/ls2/roles/prv/com.palm.systemservice.json
-    cp -f desktop-support/com.palm.systemservice.service.pub $ROOTFS/usr/share/ls2/services/com.palm.systemservice.service
-    cp -f desktop-support/com.palm.systemservice.service.prv $ROOTFS/usr/share/ls2/system-services/com.palm.systemservice.service
+    # TODO: cmake should do this for us (once we have configurable-for-desktop files)
+    cp -rf ../files/conf/* ${ROOTFS}/etc/palm
+    cp -f ../desktop-support/com.palm.systemservice.json.pub $ROOTFS/usr/share/ls2/roles/pub/com.palm.systemservice.json
+    cp -f ../desktop-support/com.palm.systemservice.json.prv $ROOTFS/usr/share/ls2/roles/prv/com.palm.systemservice.json
+    cp -f ../desktop-support/com.palm.systemservice.service.pub $ROOTFS/usr/share/ls2/services/com.palm.systemservice.service
+    cp -f ../desktop-support/com.palm.systemservice.service.prv $ROOTFS/usr/share/ls2/system-services/com.palm.systemservice.service
     mkdir -p $ROOTFS/etc/palm/backup
-    cp -f desktop-support/com.palm.systemservice.backupRegistration.json $ROOTFS/etc/palm/backup/com.palm.systemservice
+    cp -f ../desktop-support/com.palm.systemservice.backupRegistration.json $ROOTFS/etc/palm/backup/com.palm.systemservice
 }
 
 ###########################################
@@ -709,6 +692,7 @@ function build_mojoservicelauncher
     $CMAKE -D WEBOS_INSTALL_ROOT:PATH=${LUNA_STAGING} -DCMAKE_INSTALL_PREFIX=${LUNA_STAGING} ..
     make $JOBS
     make install
+
     # copy mojoservicelauncher files from staging to rootfs
     mkdir -p $ROOTFS/usr/palm/services/jsservicelauncher
     cp -f $LUNA_STAGING/usr/palm/services/jsservicelauncher/* $ROOTFS/usr/palm/services/jsservicelauncher
@@ -1077,9 +1061,6 @@ function build_BrowserServer
 
     # stage files
     make -e PREFIX=$LUNA_STAGING -f Makefile.Ubuntu stage BUILD_TYPE=release
-    #make -f Makefile.Ubuntu stage BUILD_TYPE=release
-
-    #cp -f release-x86/BrowserServer $LUNA_STAGING/bin
 }
 
 #################################
@@ -1104,7 +1085,6 @@ function build_BrowserAdapter
     # This is needed for the Browser app to run in the Open WebOS desktop build
     sed -i 's/ISIS_DESKTOP/TARGET_DESKTOP/' Makefile.Ubuntu
 
-    #make $JOBS -f Makefile.Ubuntu BUILD_TYPE=release
     make $JOBS -e PREFIX=$LUNA_STAGING -f Makefile.Ubuntu all BUILD_TYPE=release
 
     # stage files
@@ -1470,7 +1450,7 @@ set -x
 #  export SKIPSTUFF=0
 #fi
 
-export LSM_TAG="1.02"
+export LSM_TAG="1.03"
 if [ ! -d "$BASE/luna-sysmgr" ] || [ ! -d "$BASE/tarballs" ] || [ ! -e "$BASE/tarballs/luna-sysmgr_${LSM_TAG}.zip" ] ; then
     do_fetch openwebos/luna-sysmgr ${LSM_TAG} luna-sysmgr submissions/
 fi
@@ -1490,7 +1470,7 @@ build cmake
 build cmake-modules-webos 9
 
 build cjson 35
-build pbnjson 2
+build pbnjson 7
 build pmloglib 21
 build nyx-lib 58
 build luna-service2 140
@@ -1503,7 +1483,7 @@ build luna-sysmgr-ipc 1.01
 build luna-sysmgr-ipc-messages 1.01
 build luna-sysmgr-common 0.90
 build luna-sysmgr $LSM_TAG
-build keyboard-efigs 1.00
+build keyboard-efigs 1.01
 
 build webappmanager 0.92
 
@@ -1531,12 +1511,14 @@ build pmnetconfigmanager-stub 3
 
 build underscore 8
 build mojoloader 8
-build mojoservicelauncher 70
+build mojoservicelauncher 71
 
 build WebKitSupplemental 0.4
 build AdapterBase 0.2
-build BrowserServer 0.4
-build BrowserAdapter 0.3
+# BrowserServer 0.7.1 includes (only) desktop-specific changes to build with libpbnjson 7
+build BrowserServer 0.7.1
+# BrowserAdapter 0.4.1 includes (only) desktop-specific changes to build with libpbnjson 7
+build BrowserAdapter 0.4.1
 
 build nodejs 34
 build node-addon sysbus 25
