@@ -372,7 +372,7 @@ function build_isis-fonts
 ##################################
 function build_luna-webkit-api
 {
-    do_fetch openwebos/luna-webkit-api $1 luna-webkit-api
+    do_fetch openwebos/luna-webkit-api $1 luna-webkit-api submissions/
 
     ##### To build from your local clone of luna-webkit-api, change the following line to "cd" to your clone's location
     cd $BASE/luna-webkit-api
@@ -1413,7 +1413,7 @@ set -x
 #  export SKIPSTUFF=0
 #fi
 
-export LSM_TAG="1.01"
+export LSM_TAG="1.02"
 if [ ! -d "$BASE/luna-sysmgr" ] || [ ! -d "$BASE/tarballs" ] || [ ! -e "$BASE/tarballs/luna-sysmgr_${LSM_TAG}.zip" ] ; then
     do_fetch openwebos/luna-sysmgr ${LSM_TAG} luna-sysmgr submissions/
 fi
@@ -1439,13 +1439,13 @@ build nyx-lib 58
 build luna-service2 140
 build qt4 1.01
 build npapi-headers 0.4
-build luna-webkit-api 0.90
+build luna-webkit-api 1.00
 build webkit 0.54
 
 build luna-sysmgr-ipc 1.01
 build luna-sysmgr-ipc-messages 1.01
 build luna-sysmgr $LSM_TAG
-build keyboard-efigs 0.92
+build keyboard-efigs 1.00
 
 build luna-init 1.04
 build luna-prefs 1.00
