@@ -853,6 +853,8 @@ function build_luna-sysmgr-common
         export STAGING_LIBDIR="${LUNA_STAGING}/lib"
         $LUNA_STAGING/bin/qmake-palm
         make -e PREFIX=$LUNA_STAGING -f Makefile.Ubuntu install BUILD_TYPE=debug
+        mkdir -p $LUNA_STAGING/include/luna-sysmgr-common
+        cp include/* $LUNA_STAGING/include/luna-sysmgr-common/
     fi
 }
 
