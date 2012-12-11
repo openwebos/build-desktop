@@ -323,18 +323,26 @@ function build_luna-service2
     mkdir -p $BASE/luna-service2/build
     cd $BASE/luna-service2/build
 
-    #TODO: lunaservice.h no longer needs cjson (and removing the include fixes filecache build)
-    sed -i 's!#include <cjson/json.h>!!' ../include/lunaservice.h
+    #TODO: lunaservice.h no longer needs cjson; this will be removed from lunaservice.h soon.
+    sed -i 's!#include <cjson/json.h>!!' ../include/public/luna-service2/lunaservice.h
 
-    $CMAKE .. -DNO_TESTS=True -DNO_UTILS=True -DCMAKE_INSTALL_PREFIX=${LUNA_STAGING} -DCMAKE_BUILD_TYPE=Release
+    $CMAKE -D WEBOS_INSTALL_ROOT:PATH=${LUNA_STAGING} ..
     make $JOBS
     make install
 
-    cp -f ${LUNA_STAGING}/include/luna-service2/lunaservice.h ${LUNA_STAGING}/include/
-    cp -f ${LUNA_STAGING}/include/luna-service2/lunaservice-errors.h ${LUNA_STAGING}/include/
-
-    cd $LUNA_STAGING/lib
-    ln -sf libluna-service2.so liblunaservice.so
+    # TODO: Fix for luna-sysmgr, which doesn't know about staging/usr/include/luna-service2
+    cp -f ${LUNA_STAGING}/usr/include/luna-service2/lunaservice.h ${LUNA_STAGING}/include/
+    mkdir -p ${LUNA_STAGING}/include/luna-service2/
+    cp -f ${LUNA_STAGING}/usr/include/luna-service2/lunaservice-errors.h ${LUNA_STAGING}/include/luna-service2/
+    # TODO: Fix for activitymanager which includes MojLunaService.h which can't find lunaservice.h
+    cp -f ${LUNA_STAGING}/usr/include/luna-service2/lunaservice.h ${LUNA_STAGING}/usr/include/
+    # TODO: Fix for webkit tests which don't look in /usr/lib for luna-service library.
+    # (Figure out if we can pass -rpath into build for libQtWebKit.so to fix WebKit/qt/tests link.)
+    cd ${LUNA_STAGING}/lib
+    ln -s ../usr/lib/libluna-service2.so libluna-service2.so
+    ln -s ../usr/lib/libluna-service2.so libluna-service2.so.3
+    # TODO: This is for keyboard-efigs which links against lunaservice instead of luna-service2
+    ln -s ../usr/lib/libluna-service2.so liblunaservice.so
 }
 
 ################################
@@ -403,6 +411,11 @@ function build_webkit
         Source/WebCore/platform/webos/LunaServiceMgr.cpp.prepatch
       patch --directory=Source/WebCore/platform/webos < ${BASE}/luna-sysmgr/desktop-support/webkit-PALM_SERVICE_BRIDGE.patch
     fi
+
+    # TODO: Can we pass -rpath linker flags to webkit build (for staging/usr/lib)?
+    # If not, then we might want/need to prevent webkit from building Source/WebKit/qt/tests, e.g.:
+    # sed -i '/SOURCES.*$/a LIBS += -Wl,-rpath $$(LUNA_STAGING)/usr/lib -L$$(LUNA_STAGING)/usr/lib' Source/WebKit/qt/tests.pri
+    # In the mean time, we can add symlinks to end of luna-service2 build to put libs in staging/lib.
 
     # gcc 4.5.2 fails to compile WebCore module with "internal compiler error" when using -O2 or better
     GCC_VERSION=$(gcc -v 2>&1 | tail -1 | awk '{print $3}')
@@ -488,17 +501,12 @@ function build_luna-prefs
 
     ##### To build from your local clone of luna-prefs, change the following line to "cd" to your clone's location
     cd $BASE/luna-prefs
-
+    mkdir -p $BASE/luna-prefs/build
+    cd $BASE/luna-prefs/build
+    $CMAKE -D WEBOS_INSTALL_ROOT:PATH=${LUNA_STAGING} ..
     make $JOBS
-    cp -d bin/lib/libluna-prefs.so* $LUNA_STAGING/lib
-    cp include/lunaprefs.h $LUNA_STAGING/include
+    make install
 
-    #TODO: Switch to cmake build
-    #mkdir -p $BASE/luna-prefs/build
-    #cd $BASE/luna-prefs/build
-    #$CMAKE -D WEBOS_INSTALL_ROOT:PATH=${LUNA_STAGING} -DCMAKE_INSTALL_PREFIX=${LUNA_STAGING} ..
-    #make $JOBS
-    #make install
 }
 
 #################################
@@ -1467,13 +1475,13 @@ fi
 
 # Build a local version of cmake 2.8.7 so that cmake-modules-webos doesn't have to write to the OS-supplied CMake modules directory
 build cmake
-build cmake-modules-webos 9
+build cmake-modules-webos 12
 
 build cjson 35
 build pbnjson 7
 build pmloglib 21
 build nyx-lib 58
-build luna-service2 140
+build luna-service2 145
 build qt4 1.01
 build npapi-headers 0.4
 build luna-webkit-api 1.00

@@ -179,6 +179,8 @@ STAGING_DIR="${LUNA_STAGING}"
 BIN_DIR="${STAGING_DIR}/bin"
 LIB_DIR="${STAGING_DIR}/lib"
 USR_LIB_DIR="${STAGING_DIR}/usr/lib"
+USR_BIN_DIR="${STAGING_DIR}/usr/bin"
+USR_SBIN_DIR="${STAGING_DIR}/usr/sbin"
 ETC_DIR="${STAGING_DIR}/etc"
 # NOTE: this links to ROOTFS/usr/lib/luna which is what the role and service files refer to
 SERVICE_BIN_DIR="/usr/lib/luna"
@@ -201,7 +203,7 @@ SRC_DIR="${HOME}/luna-desktop-binaries/luna-sysmgr/desktop-support"
 DEB_BUILD_MULTIARCH=$(dpkg-architecture -qDEB_BUILD_MULTIARCH)
 export LD_PRELOAD=/lib/${DEB_BUILD_MULTIARCH}/libSegFault.so
 export LD_LIBRARY_PATH=${LIB_DIR}:${USR_LIB_DIR}:${LD_LIBRARY_PATH}
-export PATH=${SERVICE_BIN_DIR}:${BIN_DIR}:${PATH}
+export PATH=${SERVICE_BIN_DIR}:${USR_BIN_DIR}:${USR_SBIN_DIR}:${BIN_DIR}:${PATH}
 
 CMD="$1"
 if [ -z "$CMD" ]; then
