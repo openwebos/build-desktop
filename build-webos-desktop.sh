@@ -80,6 +80,7 @@ export ROOTFS="${BASE}/rootfs"
 export LUNA_STAGING="${BASE}/staging"
 mkdir -p ${BASE}/tarballs
 mkdir -p ${LUNA_STAGING}
+mkdir -p ${LUNA_STAGING}/usr/lib
 
 export BEDLAM_ROOT="${BASE}/staging"
 export JAVA_HOME=/usr/lib/jvm/java-6-sun
