@@ -307,9 +307,9 @@ function build_qt4
 
     # Make alias to moc for BrowserServer build
     # (Could also fix w/sed in BrowserServer build for Makefile.Ubuntu)
-    if [ ! -e ${LUNA_STAGING}/bin/moc ]; then
+    if [ ! -x ${LUNA_STAGING}/bin/moc ]; then
         cd ${LUNA_STAGING}/bin
-        ln -s moc-palm moc
+        ln -sf moc-palm moc
     fi
 }
 
@@ -338,10 +338,10 @@ function build_luna-service2
     # TODO: Fix for webkit tests which don't look in /usr/lib for luna-service library.
     # (Figure out if we can pass -rpath into build for libQtWebKit.so to fix WebKit/qt/tests link.)
     cd ${LUNA_STAGING}/lib
-    ln -s ../usr/lib/libluna-service2.so libluna-service2.so
-    ln -s ../usr/lib/libluna-service2.so libluna-service2.so.3
+    ln -sf ../usr/lib/libluna-service2.so libluna-service2.so
+    ln -sf ../usr/lib/libluna-service2.so libluna-service2.so.3
     # TODO: This is for keyboard-efigs which links against lunaservice instead of luna-service2
-    ln -s ../usr/lib/libluna-service2.so liblunaservice.so
+    ln -sf ../usr/lib/libluna-service2.so liblunaservice.so
 }
 
 ################################
@@ -998,7 +998,7 @@ function build_BrowserServer
     # Make sure alias to moc exists for BrowserServer build
     # (Could also fix using sed on Makefile.Ubuntu)
     cd ${LUNA_STAGING}/bin
-    [ -x moc ] || ln -s moc-palm moc
+    [ -x moc ] || ln -sf moc-palm moc
 
     cd $BASE/BrowserServer
     export QT_INSTALL_PREFIX=$LUNA_STAGING
