@@ -17,7 +17,7 @@
 #
 # LICENSE@@@
 
-VERSION=7.5
+VERSION=7.6
 
 PROCS=`grep -c processor /proc/cpuinfo`
 
@@ -1482,18 +1482,18 @@ build pbnjson 7
 build pmloglib 21
 build nyx-lib 58
 build luna-service2 145
-build qt4 1.01
+build qt4 1.03
 build npapi-headers 0.4
 build luna-webkit-api 1.00
 build webkit 0.54
 
 build luna-sysmgr-ipc 1.01
-build luna-sysmgr-ipc-messages 1.01
-build luna-sysmgr-common 0.90
+build luna-sysmgr-ipc-messages 1.02
+build luna-sysmgr-common 1.02
 build luna-sysmgr $LSM_TAG
 build keyboard-efigs 1.01
 
-build webappmanager 0.92
+build webappmanager 1.02
 
 build luna-init 1.04
 build luna-prefs 1.00
