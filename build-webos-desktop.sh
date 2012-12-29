@@ -361,6 +361,81 @@ function build_qt4
     fi
 }
 
+####################################
+#  Fetch and checkout a qt module
+####################################
+function fetch_qt5_module
+{
+    cd $BASE
+    if [ ! -e ${BASE}/${1} ] ; then
+        echo "Cloning ${1} from gitorious"
+        git clone git://qt.gitorious.org/qt/${1}
+    fi
+    cd $BASE/${1}
+    if [ -n "$2" ] ; then
+        git fetch
+        echo "Checking ${2} of ${1}"
+        git checkout ${2}
+    else
+        echo "Using top of 'stable' branch from ${1}"
+    fi
+    cd $BASE
+}
+
+####################################
+#  Fetch and build a qt module
+####################################
+function build_qt5_module
+{
+    QT_MODULE_STAMP="$BASE/$1/qt-module-build-$2.stamp"
+    if [ ! -e ${QT_MODULE_STAMP} ] ; then
+        fetch_qt5_module $1 $2
+        echo "Building ${1}"
+        cd $BASE/${1}
+        if [ "$1" == "qtbase" ] ; then
+            # The qtbase needs special attention as it is the core
+            if [ -e Makefile ] ; then
+                make $JOBS confclean
+            fi
+            ./configure -v -prefix ${LUNA_STAGING} -release -opengl \
+                        -nomake docs -nomake examples -nomake demos -nomake tests \
+                        -no-cups -no-javascript-jit -no-gtkstyle -no-neon -opensource -confirm-license
+            export QMAKE=${LUNA_STAGING}/bin/qmake
+        else
+            # The other modules will just be qmake'd
+            if [ -e Makefile ] ; then
+                make $JOBS distclean
+            fi
+            $QMAKE
+        fi
+        make $JOBS
+        make $JOBS install
+        rm -f $BASE/$1/qt-module-build-*.stamp
+        touch $BASE/$1/qt-module-build-$2.stamp
+    elif [ "$1" == "qtbase" ] ; then
+        export QMAKE=${LUNA_STAGING}/bin/qmake
+        echo "Qt module ${1} already built -> setting up qmake $QMAKE"
+    else
+        echo "Qt module ${1} already built -> skipping"
+    fi
+}
+
+function build_qt5
+{
+    # The order is important atleast for the first three components
+    build_qt5_module qtbase 4eac2c4728da85a5cdf91ec25170b3417f7deb68
+    build_qt5_module qtjsbackend b41c2151fdfca3f63a6cd45f6c69ae678694b63e
+    build_qt5_module qtdeclarative 5e4cc79e0669b76f8f5bf5192a0b7001ff8f4d58
+    build_qt5_module qtxmlpatterns d42b8e30e8ac2a33a877d37bd0ffbf616580d7fc
+    # qtscript is needed by the isis webkit to build with qt5. newer webkits do not impose that requirement
+    build_qt5_module qtscript e27e5bade2407e022f1814eaaf6cea8bb6741465
+    build_qt5_module qtquick1 a1ebb0367d8dd02ead0abe4ab9a82c379428666d
+    build_qt5_module qt3d d723769d90331f4cde8dcb5aa3973e5c6bad8753
+    build_qt5_module qtsensors 6323be3e2fc1b69145f37cda1d0214ec5fa3cb44
+    build_qt5_module qtlocation 0ad2be463848898235abd8ebeebc076042cf398f
+    build_qt5_module qtwebkit 1ced62033ffe82134c2f5707b6ef197fa3e85375
+}
+
 ################################
 #  Fetch and build luna-service2
 ################################
@@ -468,7 +543,6 @@ function build_webkit
     fi
 
     export QTDIR=$BASE/qt4
-    export QMAKE=$LUNA_STAGING/bin/qmake-palm
     export QMAKEPATH=$WEBKIT_DIR/Tools/qmake
     export WEBKITOUTPUTDIR="WebKitBuild/isis-x86"
 
@@ -900,7 +974,7 @@ function build_luna-sysmgr-common
             rm -rf debug-x86/.moc/*.moc
         fi
         export STAGING_LIBDIR="${LUNA_STAGING}/lib"
-        $LUNA_STAGING/bin/qmake-palm
+        ${QMAKE}
         make -e PREFIX=$LUNA_STAGING -f Makefile.Ubuntu install BUILD_TYPE=debug
         mkdir -p $LUNA_STAGING/include/luna-sysmgr-common
         cp include/* $LUNA_STAGING/include/luna-sysmgr-common/
@@ -925,7 +999,7 @@ function build_webappmanager
             rm -rf debug-x86/.moc/moc_*.cpp
             rm -rf debug-x86/.moc/*.moc
         fi
-        $LUNA_STAGING/bin/qmake-palm
+        $QMAKE
     fi
     make $JOBS -f Makefile.Ubuntu
     mkdir -p $ROOTFS/usr/lib/luna
@@ -955,7 +1029,7 @@ function build_luna-sysmgr
             rm -rf debug-x86/.moc/moc_*.cpp
             rm -rf debug-x86/.moc/*.moc
         fi
-        $LUNA_STAGING/bin/qmake-palm
+        $QMAKE
     fi
     make $JOBS -f Makefile.Ubuntu
     mkdir -p $LUNA_STAGING/lib/sysmgr-images
@@ -1034,7 +1108,7 @@ function build_keyboard-efigs
 
     set_source_dir $BASE/keyboard-efigs  $KEYBOARD_EFIGS_DIR
 
-    $LUNA_STAGING/bin/qmake-palm
+    $QMAKE
     make $JOBS -f Makefile.Ubuntu
     make install -f Makefile.Ubuntu
 }
@@ -1049,13 +1123,12 @@ function build_WebKitSupplemental
     set_source_dir $BASE/WebKitSupplemental  $WEBKITSUPPLEMENTAL_DIR
 
     export QTDIR=$BASE/qt-build-desktop
-    export QMAKE=$LUNA_STAGING/bin/qmake-palm
     export QMAKEPATH=$WEBKIT_DIR/Tools/qmake
     export QT_INSTALL_PREFIX=$LUNA_STAGING
     export STAGING_DIR=${LUNA_STAGING}
     export STAGING_INCDIR="${LUNA_STAGING}/include"
     export STAGING_LIBDIR="${LUNA_STAGING}/lib"
-    $LUNA_STAGING/bin/qmake-palm
+    $QMAKE
     make $JOBS -f Makefile
     make $JOBS -e PREFIX=$LUNA_STAGING -f Makefile install BUILD_TYPE=release
 }
@@ -1069,9 +1142,8 @@ function build_AdapterBase
 
     set_source_dir $BASE/AdapterBase  $ADAPTERBASE_DIR
 
-    export QMAKE=$LUNA_STAGING/bin/qmake-palm
     export QMAKEPATH=$WEBKIT_DIR/Tools/qmake
-    $LUNA_STAGING/bin/qmake-palm
+    $QMAKE
     make $JOBS -f Makefile
     make -f Makefile install
     #make $JOBS -e PREFIX=$LUNA_STAGING -f Makefile.Ubuntu install BUILD_TYPE=release
@@ -1102,13 +1174,7 @@ function build_BrowserServer
 {
     do_fetch isis-project/BrowserServer $1 BrowserServer
 
-    # Make sure alias to moc exists for BrowserServer build
-    # (Could also fix using sed on Makefile.Ubuntu)
-    cd ${LUNA_STAGING}/bin
-    [ -x moc ] || ln -sf moc-palm moc
-
-    set_source_dir $BASE/BrowserServer  $BROWSERSERVER_DIR
-
+    cd $BASE/BrowserServer
     export QT_INSTALL_PREFIX=$LUNA_STAGING
     export STAGING_DIR=${LUNA_STAGING}
     export STAGING_INCDIR="${LUNA_STAGING}/include"
@@ -1577,10 +1643,11 @@ build pbnjson 7
 build pmloglib 21
 build nyx-lib 58
 build luna-service2 147
-build qt4 4
+#build qt4 4
+build_qt5
 build npapi-headers 0.4
 build luna-webkit-api 1.01
-build webkit 0.54
+#build webkit 0.54
 
 build luna-sysmgr-ipc 2
 build luna-sysmgr-ipc-messages 2
@@ -1601,7 +1668,7 @@ build luna-systemui 1.02
 
 build enyo-1.0 128.2
 build core-apps 2
-build isis-browser 0.21
+#build isis-browser 0.21
 build isis-fonts v0.1
 
 build foundation-frameworks 1.0
@@ -1615,12 +1682,12 @@ build underscore 8
 build mojoloader 8
 build mojoservicelauncher 71
 
-build WebKitSupplemental 0.4
-build AdapterBase 0.2
-# BrowserServer 0.7.1 includes (only) desktop-specific changes to build with libpbnjson 7
-build BrowserServer 0.7.1
-# BrowserAdapter 0.4.1 includes (only) desktop-specific changes to build with libpbnjson 7
-build BrowserAdapter 0.4.1
+#build WebKitSupplemental 0.4
+#build AdapterBase 0.2
+## BrowserServer 0.7.1 includes (only) desktop-specific changes to build with libpbnjson 7
+#build BrowserServer 0.7.1
+## BrowserAdapter 0.4.1 includes (only) desktop-specific changes to build with libpbnjson 7
+#build BrowserAdapter 0.4.1
 
 build nodejs 34
 build node-addon sysbus 25
