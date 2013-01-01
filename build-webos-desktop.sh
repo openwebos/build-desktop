@@ -1,7 +1,7 @@
 #!/bin/bash
 # @@@LICENSE
 #
-#      Copyright (c) 2012 Hewlett-Packard Development Company, L.P.
+#      Copyright (c) 2012 - 2013 Hewlett-Packard Development Company, L.P.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@
 #
 # LICENSE@@@
 
-VERSION=7.6
+VERSION=7.7
 
 PROCS=`grep -c processor /proc/cpuinfo`
 
@@ -232,6 +232,7 @@ function build_cjson
 {
     do_fetch openwebos/cjson $1 cjson submissions/
     cd $BASE/cjson
+    
     sh autogen.sh
     mkdir -p build
     cd build
@@ -247,11 +248,21 @@ function build_cjson
 function build_pbnjson
 {
     do_fetch openwebos/libpbnjson $1 pbnjson submissions/
-    mkdir -p $BASE/pbnjson/build
-    cd $BASE/pbnjson/build
+    cd $BASE/pbnjson
+    
+    mkdir -p build
+    cd build
     $CMAKE -D WEBOS_INSTALL_ROOT:PATH=${LUNA_STAGING} ..
     make $JOBS
     make install
+    
+    # remove lib files from old location
+    cd ${LUNA_STAGING}
+    rm -f lib/libpbnjson*.so
+    # remove header files from old location
+    cd include
+    rm -rf pbnjson
+    rm -f pbnjson*.h*
 }
 
 ###########################
@@ -260,8 +271,10 @@ function build_pbnjson
 function build_pmloglib
 {
     do_fetch openwebos/pmloglib $1 pmloglib submissions/
-    mkdir -p $BASE/pmloglib/build
-    cd $BASE/pmloglib/build
+    cd $BASE/pmloglib
+    
+    mkdir -p build
+    cd build
     $CMAKE .. -DNO_TESTS=True -DNO_UTILS=True -DCMAKE_INSTALL_PREFIX=${LUNA_STAGING} -DCMAKE_BUILD_TYPE=Release
     make $JOBS
     make install
@@ -598,7 +611,7 @@ function build_core-apps
 ###########################################
 function build_luna-applauncher
 {
-    do_fetch openwebos/luna-applauncher $1 luna-applauncher
+    do_fetch openwebos/luna-applauncher $1 luna-applauncher submissions/
 
     ##### To build from your local clone of luna-applauncher, change the following line to "cd" to your clone's location
     cd $BASE/luna-applauncher
@@ -1458,7 +1471,7 @@ set -x
 #  export SKIPSTUFF=0
 #fi
 
-export LSM_TAG="1.03"
+export LSM_TAG="2"
 if [ ! -d "$BASE/luna-sysmgr" ] || [ ! -d "$BASE/tarballs" ] || [ ! -e "$BASE/tarballs/luna-sysmgr_${LSM_TAG}.zip" ] ; then
     do_fetch openwebos/luna-sysmgr ${LSM_TAG} luna-sysmgr submissions/
 fi
@@ -1466,11 +1479,9 @@ if [ -d $BASE/luna-sysmgr ] ; then
     rm -f $BASE/luna-sysmgr/luna-desktop-build*.stamp
 fi
 
-## TODO: Remove this temporary fix once db8 incremented past 61.1 
-if [ ! -d "$BASE/configurator" ] || [ ! -e "$BASE/configurator/luna-desktop-build-49.stamp" ] ; then
-    if [ -d "$BASE/db8" ] && [ -e "$BASE/db8/luna-desktop-build-61.1.stamp" ] ; then
-        rm -f $BASE/db8/luna-desktop-build-61.1.stamp
-    fi
+## TODO: Remove this temporary fix once pbnjson incremented past 7 
+if [ -d "$BASE/pbnjson" ] && [ -e "$BASE/pbnjson/luna-desktop-build-7.stamp" ] ; then
+    rm -f $BASE/pbnjson/luna-desktop-build-7.stamp
 fi
 
 # Build a local version of cmake 2.8.7 so that cmake-modules-webos doesn't have to write to the OS-supplied CMake modules directory
@@ -1481,29 +1492,29 @@ build cjson 35
 build pbnjson 7
 build pmloglib 21
 build nyx-lib 58
-build luna-service2 145
-build qt4 1.03
+build luna-service2 146
+build qt4 3
 build npapi-headers 0.4
-build luna-webkit-api 1.00
+build luna-webkit-api 1.01
 build webkit 0.54
 
 build luna-sysmgr-ipc 1.01
 build luna-sysmgr-ipc-messages 1.02
-build luna-sysmgr-common 1.02
+build luna-sysmgr-common 2
 build luna-sysmgr $LSM_TAG
-build keyboard-efigs 1.01
+build keyboard-efigs 1.02
 
-build webappmanager 1.02
+build webappmanager 2
 
 build luna-init 1.04
-build luna-prefs 1.00
-build luna-sysservice 1.03
+build luna-prefs 1.01
+build luna-sysservice 1.04
 build librolegen 16
 ##build serviceinstaller 1.01
 build luna-universalsearchmgr 1.00
 
-build luna-applauncher 0.90
-build luna-systemui 1.01
+build luna-applauncher 1.00
+build luna-systemui 1.02
 
 build enyo-1.0 128.2
 build core-apps 2
@@ -1533,7 +1544,7 @@ build node-addon sysbus 25
 build node-addon pmlog 10
 build node-addon dynaload 11
 
-build db8 61.1
+build db8 62
 build configurator 49
 
 build activitymanager 110
