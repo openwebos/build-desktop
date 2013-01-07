@@ -1500,7 +1500,7 @@ build webkit 0.54
 
 build luna-sysmgr-ipc 1.01
 build luna-sysmgr-ipc-messages 1.02
-build luna-sysmgr-common 2
+build luna-sysmgr-common 3
 build luna-sysmgr $LSM_TAG
 build keyboard-efigs 1.02
 
