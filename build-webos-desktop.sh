@@ -1492,7 +1492,7 @@ build cjson 35
 build pbnjson 7
 build pmloglib 21
 build nyx-lib 58
-build luna-service2 146
+build luna-service2 147
 build qt4 3
 build npapi-headers 0.4
 build luna-webkit-api 1.01
