@@ -1,0 +1,192 @@
+From 8cfa90e528c64f08b0558d90d175c63b177fb0ba Mon Sep 17 00:00:00 2001
+From: Florian Hanel <florian@L8440CND1123VNS.(none)>
+Date: Wed, 19 Dec 2012 14:52:58 +0100
+Subject: [PATCH 2/2] Add an "attributes" member to QWebPage for enyo window params
+ Adds an attributes member to QWebPage. it is used by enyo in openWindow
+ calls to communicate information to WebAppMgr like "{"window":"card"}"
+
+---
+ Source/WebCore/page/WindowFeatures.cpp             |   62 ++++++++++++++++++++
+ Source/WebCore/page/WindowFeatures.h               |    2 +
+ Source/WebKit/qt/WebCoreSupport/ChromeClientQt.cpp |    4 +
+ Source/WebKit/qt/WebCoreSupport/QWebPageAdapter.h  |    1 +
+ Source/WebKit/qt/WidgetApi/qwebpage.cpp            |    5 ++
+ Source/WebKit/qt/WidgetApi/qwebpage.h              |    4 +
+ Source/WebKit/qt/WidgetApi/qwebpage_p.h            |    3 +
+ 7 files changed, 81 insertions(+), 0 deletions(-)
+
+diff --git a/Source/WebCore/page/WindowFeatures.cpp b/Source/WebCore/page/WindowFeatures.cpp
+index 7768a09..e23bbcd 100644
+--- a/Source/WebCore/page/WindowFeatures.cpp
++++ b/Source/WebCore/page/WindowFeatures.cpp
+@@ -117,6 +117,68 @@ WindowFeatures::WindowFeatures(const String& features)
+         String valueString(buffer.substring(valueBegin, valueEnd - valueBegin));
+         setWindowFeature(keyString, valueString);
+     }
++
++    i = 0;
++    length = features.length();
++    buffer = features.lower();
++    while (i < length) {
++        // skip to first non-separator, but don't skip past the end of the string
++        while (isWindowFeaturesSeparator(buffer[i])) {
++            if (i >= length)
++                break;
++            i++;
++        }
++        keyBegin = i;
++
++        // skip to first separator
++        while (!isWindowFeaturesSeparator(buffer[i]))
++            i++;
++        keyEnd = i;
++
++        String keyString(buffer.substring(keyBegin, keyEnd - keyBegin));
++        if (keyString != "attributes") {
++            // skip to next ','
++            while (buffer[i] != ',') {
++                if (i >= length)
++                    break;
++                i++;
++            }
++            continue;
++        }
++
++        // skip to first '{'
++        while (buffer[i] != '{') {
++            i++;
++            if (i >= length)
++                break;
++        }
++
++        if (i >= length)
++            break;
++
++        valueBegin = i;
++
++        // skip to last '}'
++        int unmatchedBraceCount = 0;
++        while (i < length) {
++            if (buffer[i] == '{')
++                unmatchedBraceCount++;
++            else if (buffer[i] == '}')
++                unmatchedBraceCount--;
++
++            if (unmatchedBraceCount <= 0)
++                break;
++            i++;
++        }
++
++        if (i >= length)
++            break;
++
++        valueEnd = i;
++        attributes = String(buffer.substring(valueBegin, valueEnd - valueBegin + 1));
++
++        break;
++    }
+ }
+ 
+ void WindowFeatures::setWindowFeature(const String& keyString, const String& valueString)
+diff --git a/Source/WebCore/page/WindowFeatures.h b/Source/WebCore/page/WindowFeatures.h
+index 204b7f8..b9b098d 100644
+--- a/Source/WebCore/page/WindowFeatures.h
++++ b/Source/WebCore/page/WindowFeatures.h
+@@ -84,6 +84,8 @@ namespace WebCore {
+         static bool boolFeature(const DialogFeaturesMap&, const char* key, bool defaultValue = false);
+         static float floatFeature(const DialogFeaturesMap&, const char* key, float min, float max, float defaultValue);
+ 
++        String attributes;
++
+     private:
+         void setWindowFeature(const String& keyString, const String& valueString);
+     };
+diff --git a/Source/WebKit/qt/WebCoreSupport/ChromeClientQt.cpp b/Source/WebKit/qt/WebCoreSupport/ChromeClientQt.cpp
+index 71b45d6..cdba744 100644
+--- a/Source/WebKit/qt/WebCoreSupport/ChromeClientQt.cpp
++++ b/Source/WebKit/qt/WebCoreSupport/ChromeClientQt.cpp
+@@ -226,6 +226,10 @@ Page* ChromeClientQt::createWindow(Frame*, const FrameLoadRequest& request, cons
+     if (!newPage)
+         return 0;
+ 
++    if (!features.attributes.isEmpty()) {
++        newPage->setAttributes(features.attributes);
++    }
++
+     return newPage->page;
+ }
+ 
+diff --git a/Source/WebKit/qt/WebCoreSupport/QWebPageAdapter.h b/Source/WebKit/qt/WebCoreSupport/QWebPageAdapter.h
+index 87b4ecd..caada54 100644
+--- a/Source/WebKit/qt/WebCoreSupport/QWebPageAdapter.h
++++ b/Source/WebKit/qt/WebCoreSupport/QWebPageAdapter.h
+@@ -153,6 +153,7 @@ public:
+     virtual void databaseQuotaExceeded(QWebFrameAdapter*, const QString& databaseName) = 0;
+     virtual void applicationCacheQuotaExceeded(QWebSecurityOrigin*, quint64 defaultOriginQuota, quint64 totalSpaceNeeded) = 0;
+     virtual void setToolTip(const QString&) = 0;
++    virtual void setAttributes(const QString&) = 0;
+     virtual QStringList chooseFiles(QWebFrameAdapter*, bool allowMultiple, const QStringList& suggestedFileNames) = 0;
+     virtual QColor colorSelectionRequested(const QColor& selectedColor) = 0;
+     virtual QWebSelectMethod* createSelectPopup() = 0;
+diff --git a/Source/WebKit/qt/WidgetApi/qwebpage.cpp b/Source/WebKit/qt/WidgetApi/qwebpage.cpp
+index c1176cf..1b86509 100644
+--- a/Source/WebKit/qt/WidgetApi/qwebpage.cpp
++++ b/Source/WebKit/qt/WidgetApi/qwebpage.cpp
+@@ -952,6 +952,11 @@ void QWebPagePrivate::shortcutOverrideEvent(QKeyEvent* event)
+ 
+ }
+ 
++const QString& QWebPage::attributes() const
++{
++    return d->m_attributes;
++}
++
+ bool QWebPagePrivate::gestureEvent(QGestureEvent* event)
+ {
+     QWebFrameAdapter* frame = mainFrame.data()->d;
+diff --git a/Source/WebKit/qt/WidgetApi/qwebpage.h b/Source/WebKit/qt/WidgetApi/qwebpage.h
+index 5624b49..ea362ec 100644
+--- a/Source/WebKit/qt/WidgetApi/qwebpage.h
++++ b/Source/WebKit/qt/WidgetApi/qwebpage.h
+@@ -79,6 +79,8 @@ class QWEBKIT_EXPORT QWebPage : public QObject {
+     Q_PROPERTY(QPalette palette READ palette WRITE setPalette)
+     Q_PROPERTY(bool contentEditable READ isContentEditable WRITE setContentEditable)
+     Q_ENUMS(LinkDelegationPolicy NavigationType WebAction)
++
++    Q_PROPERTY(QString attributes READ attributes)
+ public:
+     enum NavigationType {
+         NavigationTypeLinkClicked,
+@@ -276,6 +278,8 @@ public:
+     QString selectedText() const;
+     QString selectedHtml() const;
+ 
++    const QString& attributes() const;
++
+ #ifndef QT_NO_ACTION
+     QAction *action(WebAction action) const;
+ #endif
+diff --git a/Source/WebKit/qt/WidgetApi/qwebpage_p.h b/Source/WebKit/qt/WidgetApi/qwebpage_p.h
+index b35cf2e..b14039c 100644
+--- a/Source/WebKit/qt/WidgetApi/qwebpage_p.h
++++ b/Source/WebKit/qt/WidgetApi/qwebpage_p.h
+@@ -91,6 +91,7 @@ public:
+     virtual void databaseQuotaExceeded(QWebFrameAdapter*, const QString& databaseName) OVERRIDE;
+     virtual void applicationCacheQuotaExceeded(QWebSecurityOrigin*, quint64 defaultOriginQuota, quint64 totalSpaceNeeded) OVERRIDE;
+     virtual void setToolTip(const QString&) OVERRIDE;
++    virtual void setAttributes(const QString& attr) OVERRIDE {m_attributes = attr;};
+ #if USE(QT_MULTIMEDIA)
+     virtual QWebFullScreenVideoHandler* createFullScreenVideoHandler() OVERRIDE;
+ #endif
+@@ -186,6 +187,8 @@ public:
+     QSize m_viewportSize;
+     QSize fixedLayoutSize;
+ 
++    QString m_attributes;
++
+     QWebHitTestResult hitTestResult;
+ #ifndef QT_NO_CONTEXTMENU
+     QPointer<QMenu> currentContextMenu;
+-- 
+1.7.4.1
+

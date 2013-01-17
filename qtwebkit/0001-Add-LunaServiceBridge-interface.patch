@@ -1,0 +1,1017 @@
+From 2d73c8bcae3ea988e2555a22a82bc4b549ad5595 Mon Sep 17 00:00:00 2001
+From: Florian Hanel <florian@L8440CND1123VNS.(none)>
+Date: Wed, 19 Dec 2012 13:27:45 +0100
+Subject: [PATCH 1/2] Add LunaServiceBridge interface
+
+LunaServiceBridge allows WebOS Apps to talk to LunaServiceBus
+It is required for many enyo apps. LunaServiceBridge is a Javascript
+Object that they use to communicate using liblunaservice
+---
+ Source/WebCore/DerivedSources.pri                  |    6 +
+ Source/WebCore/Target.pri                          |   11 +
+ Source/WebCore/WebCore.pri                         |    3 +
+ Source/WebCore/page/DOMWindow.idl                  |    2 +
+ Source/WebCore/platform/webos/LunaServiceMgr.cpp   |  290 ++++++++++++++
+ Source/WebCore/platform/webos/LunaServiceMgr.h     |   56 +++
+ .../WebCore/platform/webos/PalmServiceBridge.cpp   |  414 ++++++++++++++++++++
+ Source/WebCore/platform/webos/PalmServiceBridge.h  |   89 +++++
+ .../WebCore/platform/webos/PalmServiceBridge.idl   |   19 +
+ Tools/qmake/mkspecs/features/features.prf          |    4 +
+ Tools/qmake/mkspecs/features/features.pri          |    1 +
+ 11 files changed, 895 insertions(+), 0 deletions(-)
+ create mode 100644 Source/WebCore/platform/webos/LunaServiceMgr.cpp
+ create mode 100644 Source/WebCore/platform/webos/LunaServiceMgr.h
+ create mode 100644 Source/WebCore/platform/webos/PalmServiceBridge.cpp
+ create mode 100644 Source/WebCore/platform/webos/PalmServiceBridge.h
+ create mode 100644 Source/WebCore/platform/webos/PalmServiceBridge.idl
+
+diff --git a/Source/WebCore/DerivedSources.pri b/Source/WebCore/DerivedSources.pri
+index 7e2245f..6763762 100644
+--- a/Source/WebCore/DerivedSources.pri
++++ b/Source/WebCore/DerivedSources.pri
+@@ -481,6 +481,12 @@ IDL_BINDINGS += \
+     $$PWD/xml/XPathEvaluator.idl \
+     $$PWD/xml/XSLTProcessor.idl
+ 
++
++enable?(PALM_SERVICE_BRIDGE) {
++  IDL_BINDINGS += platform/webos/PalmServiceBridge.idl
++}
++
++
+ enable?(SVG) {
+   IDL_BINDINGS += \
+     $$PWD/svg/SVGAElement.idl \
+diff --git a/Source/WebCore/Target.pri b/Source/WebCore/Target.pri
+index 4535a46..f1b0b7f 100644
+--- a/Source/WebCore/Target.pri
++++ b/Source/WebCore/Target.pri
+@@ -3475,6 +3475,17 @@ enable?(WEB_AUDIO) {
+     }
+ }
+ 
++enable?(PALM_SERVICE_BRIDGE) {
++    INCLUDEPATH += $$PWD/platform/webos
++    INCLUDEPATH += /home/florian/src-ics/root/include/luna-service2
++    SOURCES += \
++        platform/webos/PalmServiceBridge.cpp \
++        platform/webos/LunaServiceMgr.cpp 
++    HEADERS += \
++        platform/webos/PalmServiceBridge.h \
++        platform/webos/LunaServiceMgr.h 
++}
++
+ enable?(FULLSCREEN_API) {
+     SOURCES += \
+         rendering/RenderFullScreen.cpp
+diff --git a/Source/WebCore/WebCore.pri b/Source/WebCore/WebCore.pri
+index 67e12c0..e7fd32e 100644
+--- a/Source/WebCore/WebCore.pri
++++ b/Source/WebCore/WebCore.pri
+@@ -150,6 +150,9 @@ enable?(NETSCAPE_PLUGIN_API) {
+             -lversion
+     }
+ }
++enable?(PALM_SERVICE_BRIDGE) {
++    LIBS += -L /home/florian/src-ics/root/lib -llunaservice
++}
+ 
+ enable?(ORIENTATION_EVENTS)|enable?(DEVICE_ORIENTATION) {
+     QT += sensors
+diff --git a/Source/WebCore/page/DOMWindow.idl b/Source/WebCore/page/DOMWindow.idl
+index 4a3a5f4..87c9bf8 100644
+--- a/Source/WebCore/page/DOMWindow.idl
++++ b/Source/WebCore/page/DOMWindow.idl
+@@ -809,5 +809,7 @@
+     // window.toString() requires special handling in V8
+     [V8DoNotCheckSignature, DoNotCheckSecurity, Custom, NotEnumerable] DOMString toString();
+ #endif // defined(V8_BINDING)
++
++    attribute [Conditional=PALM_SERVICE_BRIDGE] PalmServiceBridgeConstructor PalmServiceBridge;
+ };
+ 
+diff --git a/Source/WebCore/platform/webos/LunaServiceMgr.cpp b/Source/WebCore/platform/webos/LunaServiceMgr.cpp
+new file mode 100644
+index 0000000..e763655
+--- /dev/null
++++ b/Source/WebCore/platform/webos/LunaServiceMgr.cpp
+@@ -0,0 +1,290 @@
++
++#include "config.h"
++#if ENABLE(PALM_SERVICE_BRIDGE)
++#include "LunaServiceMgr.h"
++
++#include <wtf/text/WTFString.h>
++
++#include <glib.h>
++#include <lunaservice.h>
++#include <stdio.h>
++#include <stdlib.h>
++#include <wtf/text/CString.h>
++
++namespace WebCore {
++
++/** 
++* @brief Internal callback for service responses.
++* 
++* @param  sh 
++* @param  reply 
++* @param  ctx 
++* 
++* @retval
++*/
++static bool 
++message_filter(LSHandle *sh, LSMessage* reply, void* ctx)
++{
++    const char* payload = LSMessageGetPayload(reply);
++
++    LunaServiceManagerListener* listener = (LunaServiceManagerListener*)ctx;
++
++    if (listener) {
++        listener->serviceResponse(payload);
++        return true;
++    }
++
++    return false;
++}
++
++LunaServiceManager* s_instance = 0;
++
++/** 
++* @brief Obtains the singleton LunaServiceManager.
++* 
++* @retval the LunaServiceManager
++*/
++LunaServiceManager* LunaServiceManager::instance()
++{
++    bool retVal;
++    if (s_instance)
++        return s_instance;
++
++    s_instance = new LunaServiceManager();
++    retVal = s_instance->init();
++    if (!retVal)
++        goto error;
++
++    return s_instance;
++
++error:
++    fprintf(stderr, "*******************************************************************\n");
++    fprintf(stderr, "*  Could got get an instance of LunaServiceManager.               *\n");
++    fprintf(stderr, "*  Try running with luna-dbus start; luna-dbus run <executable>.  *\n");
++    fprintf(stderr, "*******************************************************************\n");
++    exit(-1);
++}
++    
++/** 
++* @brief Private constructor to enforce singleton.
++*/
++LunaServiceManager::LunaServiceManager() :
++      publicBus(0)
++    , privateBus(0)
++    , palmServiceHandle(0)
++    , publicBusHighPriority(0)
++    , privateBusHighPriority(0)
++    , palmServiceHandleHighPriority(0)
++{
++}
++
++LunaServiceManager::~LunaServiceManager()
++{
++    // ED : Close the single connection to DBUS.
++    if (palmServiceHandle) {
++        bool retVal;
++        LSError lserror;
++        LSErrorInit(&lserror);
++
++        retVal = LSUnregisterPalmService(palmServiceHandle, &lserror);
++        if (!retVal) {
++            g_warning("LSUnregisterPalmService ERROR %d: %s (%s @ %s:%d)",
++                lserror.error_code, lserror.message,
++                lserror.func, lserror.file, lserror.line);
++            LSErrorFree(&lserror);
++        }
++    }
++}
++
++bool LunaServiceManager::init()
++{
++    bool init;
++    LSError lserror;
++    LSErrorInit(&lserror);
++
++    String id("com.palm.luna-");
++    id.append(String::number(getpid()));    
++    String active = (id + "-active");
++    String phone = (id + "-phone");
++    init = LSRegisterPalmService(id.utf8().data(), &palmServiceHandle, &lserror);
++    if (!init) 
++        goto error;
++    
++    init = LSGmainAttachPalmService(palmServiceHandle,
++            g_main_loop_new(g_main_context_default(), TRUE), &lserror); 
++    if (!init) 
++        goto error;
++
++    privateBus = LSPalmServiceGetPrivateConnection(palmServiceHandle);
++    publicBus = LSPalmServiceGetPublicConnection(palmServiceHandle);
++
++    if (privateBus) {
++        init = LSGmainSetPriority(privateBus, G_PRIORITY_DEFAULT, &lserror);
++        if (!init)
++            goto error;
++    }
++
++    if (publicBus) {
++        init = LSGmainSetPriority(publicBus, G_PRIORITY_DEFAULT, &lserror);
++        if (!init)
++            goto error;
++    }
++
++    init = LSRegisterPalmService(phone.utf8().data(), &palmServiceHandleHighPriority, &lserror);
++    if (!init) 
++        goto error;
++
++    init = LSGmainAttachPalmService(palmServiceHandleHighPriority,
++            g_main_loop_new(g_main_context_default(), TRUE), &lserror); 
++    if (!init) 
++        goto error;
++
++    privateBusHighPriority = LSPalmServiceGetPrivateConnection(palmServiceHandleHighPriority);
++    publicBusHighPriority = LSPalmServiceGetPublicConnection(palmServiceHandleHighPriority);
++
++    if (privateBusHighPriority) {
++        init = LSGmainSetPriority(privateBusHighPriority, G_PRIORITY_HIGH, &lserror);
++        if (!init)
++            goto error;
++    }
++
++    if (publicBusHighPriority) {
++        init = LSGmainSetPriority(publicBusHighPriority, G_PRIORITY_HIGH, &lserror);
++        if (!init)
++            goto error;
++    }
++
++
++    init = LSRegisterPalmService(active.utf8().data(), &palmServiceHandleMediumPriority, &lserror);
++    if (!init) 
++        goto error;
++
++    init = LSGmainAttachPalmService(palmServiceHandleMediumPriority,
++            g_main_loop_new(g_main_context_default(), TRUE), &lserror);
++    if (!init) 
++        goto error;
++
++    privateBusMediumPriority = LSPalmServiceGetPrivateConnection(palmServiceHandleMediumPriority);
++    publicBusMediumPriority = LSPalmServiceGetPublicConnection(palmServiceHandleMediumPriority);
++
++    if (privateBusMediumPriority) {
++        init = LSGmainSetPriority(privateBusMediumPriority, G_PRIORITY_HIGH + 50, &lserror);
++        if (!init)
++            goto error;
++    }
++
++    if (publicBusMediumPriority) {
++        init = LSGmainSetPriority(publicBusMediumPriority, G_PRIORITY_HIGH + 50, &lserror);
++        if (!init)
++            goto error;
++    }
++
++error:
++    if (!init) {
++        g_warning("Cannot initialize LunaServiceManager ERROR %d: %s (%s @ %s:%d)",
++            lserror.error_code, lserror.message,
++            lserror.func, lserror.file, lserror.line);
++        LSErrorFree(&lserror);
++    }
++
++    return init;
++}
++
++/** 
++* @brief This method will make the async call to DBUS.
++* 
++* @param  uri 
++* @param  payload 
++* @param  inListener 
++* 
++* @retval 0 if message could not be sent.
++* @retval >0 serial number for the message.
++*/
++unsigned long LunaServiceManager::call(const char* uri, const char* payload, LunaServiceManagerListener* inListener,
++                                       const char* callerId, bool usePrivateBus)
++{
++    bool retVal;
++    LSError lserror;
++    LSErrorInit(&lserror);
++    LSMessageToken token = 0;
++    LSHandle* serviceHandle = 0;
++    
++    if (callerId && (!(*callerId))) 
++        callerId = 0;
++
++    static int phoneAppIdLen = strlen("com.palm.app.phone");
++    if (callerId && !(strncmp(callerId, "com.palm.app.phone", phoneAppIdLen))) {
++
++        if (!usePrivateBus)
++            serviceHandle = publicBusHighPriority;
++        else
++            serviceHandle = privateBusHighPriority;
++
++    } else {
++/*  else if (callerId && activeAppId && strncmp(callerId, activeAppId, strlen(activeAppId)) == 0) {
++
++
++        if (!usePrivateBus)
++            serviceHandle = publicBusMediumPriority;
++        else
++            serviceHandle = privateBusMediumPriority;
++    }
++*/
++        if (!usePrivateBus) 
++            serviceHandle = publicBus;
++        else  
++            serviceHandle = privateBus;
++    }
++    
++    if (!inListener)
++        retVal = LSCallFromApplication(serviceHandle, uri, payload, callerId, 0, 0, &token, &lserror);
++    else {
++        retVal = LSCallFromApplication(serviceHandle, uri, payload, callerId, message_filter, inListener, &token, &lserror);
++        if (retVal) {
++            inListener->listenerToken = token;
++            inListener->sh = serviceHandle;
++        }
++    }
++
++    if (!retVal) {
++        g_warning("LSCallFromApplication ERROR %d: %s (%s @ %s:%d)",
++            lserror.error_code, lserror.message,
++            lserror.func, lserror.file, lserror.line);
++        LSErrorFree(&lserror);
++        token = 0;
++        goto error;
++    }
++
++error:
++    return token;
++}
++    
++/** 
++ * @brief Terminates a call causing any subscription for responses to end.
++ *        This is also called by garbage collector's collect()
++ *        when no more references to inListener exist.
++ *
++ * @param  inListener 
++ */
++void LunaServiceManager::cancel(LunaServiceManagerListener* inListener)
++{
++    bool retVal;
++    LSError lserror;
++
++    if (!inListener || !inListener->listenerToken)
++        return;
++    
++    LSErrorInit(&lserror);
++    
++    if (!LSCallCancel(inListener->sh, inListener->listenerToken, &lserror)) {
++        g_warning("LSCallCancel ERROR %d: %s (%s @ %s:%d)",
++            lserror.error_code, lserror.message,
++            lserror.func, lserror.file, lserror.line);
++        LSErrorFree(&lserror);
++    }
++
++    // set the token to zero to indicate we have been canceled
++    inListener->listenerToken = 0;
++}
++};
++#endif
+diff --git a/Source/WebCore/platform/webos/LunaServiceMgr.h b/Source/WebCore/platform/webos/LunaServiceMgr.h
+new file mode 100644
+index 0000000..cfcba24
+--- /dev/null
++++ b/Source/WebCore/platform/webos/LunaServiceMgr.h
+@@ -0,0 +1,56 @@
++
++#ifndef LunaServiceMgr_h
++#define LunaServiceMgr_h
++
++#if ENABLE(PALM_SERVICE_BRIDGE)
++
++#include <lunaservice.h>
++
++namespace WebCore {
++
++struct LunaServiceManagerListener {
++        LunaServiceManagerListener() : listenerToken(LSMESSAGE_TOKEN_INVALID), sh(0) { }
++        virtual ~LunaServiceManagerListener() { }
++        virtual void serviceResponse(const char* body) = 0;
++        LSMessageToken listenerToken;
++        LSHandle* sh;
++};
++
++
++//
++//  LunaServiceManager
++//
++// This class is a singleton which handles all the client requests
++// for a WebKit instance.
++
++class LunaServiceManager {
++    public:
++        ~LunaServiceManager();
++        
++        static LunaServiceManager* instance();
++        unsigned long call(const char* uri, const char* payload, LunaServiceManagerListener*, const char* callerId, bool usePrivateBus = false);
++        void cancel(LunaServiceManagerListener*);
++
++    private:
++        bool init();
++        LunaServiceManager();
++
++        LSHandle* publicBus;
++        LSHandle* privateBus;
++        LSPalmService* palmServiceHandle;
++
++        // The Medium Priority bus is used for the active app
++        LSHandle* publicBusMediumPriority;
++        LSHandle* privateBusMediumPriority;
++        LSPalmService* palmServiceHandleMediumPriority;
++
++        // The High Priority bus is used only for the Phone app
++        LSHandle* publicBusHighPriority;
++        LSHandle* privateBusHighPriority;
++        LSPalmService* palmServiceHandleHighPriority;
++};
++
++}
++
++#endif
++#endif
+diff --git a/Source/WebCore/platform/webos/PalmServiceBridge.cpp b/Source/WebCore/platform/webos/PalmServiceBridge.cpp
+new file mode 100644
+index 0000000..838ce50
+--- /dev/null
++++ b/Source/WebCore/platform/webos/PalmServiceBridge.cpp
+@@ -0,0 +1,414 @@
++
++#include "config.h"
++#if ENABLE(PALM_SERVICE_BRIDGE)
++#include "PalmServiceBridge.h"
++
++#include "Document.h"
++#include "Event.h"
++#include "EventException.h"
++#include "EventListener.h"
++#include "EventNames.h"
++#include "ExceptionCode.h"
++#include "Frame.h"
++#include "Logging.h"
++#include "Page.h"
++#include <wtf/text/WTFString.h>
++
++#include "ScriptController.h"
++#include <wtf/RefCountedLeakCounter.h>
++
++#if USE(V8)
++#include "V8Proxy.h"
++#else
++#include "JSDOMWindow.h"
++#include "JSEventListener.h"
++#include "JSFunction.h"
++#include "ScriptSourceCode.h"
++#include "ScriptValue.h"
++#include "runtime_root.h"
++#include <runtime/JSLock.h>
++using namespace JSC;
++#endif
++
++#include <map>
++#include <set>
++
++namespace WebCore {
++
++typedef std::set<PalmServiceBridge*> ServicesSet;
++typedef std::map<Document*, ServicesSet*> ServicesSetMap;
++
++static bool sDebugServices = (getenv("DEBUG_SERVICES") ? true : false);
++
++#ifndef NDEBUG
++static WTF::RefCountedLeakCounter serviceBridgeCounter("PalmServiceBridge");
++#endif
++
++static ServicesSetMap* servicesByDocument()
++{
++    static ServicesSetMap map;
++    return &map;
++}
++
++/* static */ int PalmServiceBridge::numHandlesForUrl(const char* appId)
++{
++    for (ServicesSetMap::iterator setIt = servicesByDocument()->begin(); setIt != servicesByDocument()->end(); ++setIt) {
++        if (!strcmp(appId, setIt->first->url().string().utf8().data()))
++            return setIt->second->size();
++    }
++
++    return 0;
++}
++
++/* static */ void PalmServiceBridge::handlesForUrl(const char* appId, std::list<PalmServiceBridge*>& outHandles)
++{
++    outHandles.clear();
++    for (ServicesSetMap::iterator setIt = servicesByDocument()->begin(); setIt != servicesByDocument()->end(); ++setIt) {
++        if (!strcmp(appId, setIt->first->url().string().utf8().data())) {
++            ServicesSet* set = setIt->second;
++
++            for (ServicesSet::iterator s = set->begin(); s != set->end(); ++s)
++                outHandles.push_back(*s);
++
++            return;
++        }
++    }
++}
++
++static void addToServicesByDocument(Document* doc, PalmServiceBridge* svc)
++{
++    if (!doc || !svc)
++        return;
++
++    ServicesSet* set = 0;
++    ServicesSetMap::iterator it = servicesByDocument()->find(doc);
++    if (it == servicesByDocument()->end()) {
++        set = new ServicesSet();
++        (*servicesByDocument())[doc] = set;
++    } else
++        set = it->second;
++
++    set->insert(svc);
++}
++
++static void removeFromServicesByDocument(Document* doc, PalmServiceBridge* svc)
++{
++    if (!doc || !svc)
++        return;
++
++    ServicesSetMap::iterator it = servicesByDocument()->find(doc);
++    if (it == servicesByDocument()->end())
++        return;
++
++    ServicesSet* set = it->second;
++    if (!set)
++        return;
++
++    set->erase(svc);
++    if (!set->size()) {
++        // remove from the hash map
++        delete set;
++        servicesByDocument()->erase(it);
++    }
++}
++
++PalmServiceBridge::PalmServiceBridge(ScriptExecutionContext* context, bool subscribe)
++    : ActiveDOMObject(context, this)
++      , m_canceled(false)
++      , m_subscribed(subscribe)
++      , m_inServiceCallback(false)
++{
++    addToServicesByDocument(document(), this);
++
++#ifndef NDEBUG
++    serviceBridgeCounter.increment();
++#endif
++}
++
++bool PalmServiceBridge::init(Document* d, bool subscribe)
++{
++    m_subscribed = subscribe;
++    return true;
++}
++
++PalmServiceBridge::~PalmServiceBridge()
++{
++    ExceptionCode ec;
++    cancel(ec);
++
++#if USE(V8)
++    if (!m_callbackFunction.IsEmpty()) {
++        m_callbackFunction.Dispose();
++        m_callbackFunction.Clear();
++    }
++#endif // USE(V8)
++
++    if (scriptExecutionContext() && document())
++        removeFromServicesByDocument(document(), this);
++
++#ifndef NDEBUG
++    serviceBridgeCounter.decrement();
++#endif
++}
++
++void PalmServiceBridge::detachServices(Document* doc)
++{
++    ServicesSetMap::iterator it = servicesByDocument()->find(doc);
++    if (it == servicesByDocument()->end())
++        return;
++
++    ServicesSet* services = it->second;
++    servicesByDocument()->erase(it);
++
++    if (services) {
++        while (services->size()) {
++            ServicesSet::iterator sit = services->begin();
++            ExceptionCode ec;
++            (*sit)->cancel(ec);
++            services->erase(sit);
++        }
++        delete services;
++    }
++
++}
++
++void PalmServiceBridge::cancelServices(Document* doc)
++{
++    ServicesSetMap::iterator it = servicesByDocument()->find(doc);
++    if (it == servicesByDocument()->end())
++        return;
++
++    ServicesSet* services = it->second;
++
++    if (services) {
++        for (ServicesSet::iterator sit = services->begin(); sit != services->end(); ++sit) {
++            PalmServiceBridge* br = *sit;
++            ExceptionCode ec;
++            br->cancel(ec);
++        }
++    }
++}
++
++String PalmServiceBridge::version()
++{
++    return String("1.1");
++}
++
++#if USE(V8)
++void PalmServiceBridge::setOnservicecallback(v8::Handle<v8::Function> func)
++{
++    if (!m_callbackFunction.IsEmpty()) {
++        m_callbackFunction.Dispose();
++        m_callbackFunction.Clear();
++    }
++    m_callbackFunction = v8::Persistent<v8::Function>::New(func);
++
++    // Comment out below to use weak references on functions.
++    m_callbackFunction.MakeWeak(this, (void (*)(v8::Persistent<v8::Value>, void*)) PalmServiceBridge::WeakRefCallback);
++}
++
++// We get this callback from v8 when the only reference to our callback function
++// are also weak. We will therefore release our reference to it as well.
++void PalmServiceBridge::WeakRefCallback(v8::Persistent<v8::Value> object, void* parameter)
++{
++    PalmServiceBridge* pThis = (PalmServiceBridge*)parameter;
++
++    // In the case when we loose the function refernce during a callback, do nothing.
++    if (pThis->m_inServiceCallback)
++        return;
++
++    ExceptionCode ec;
++    pThis->cancel(ec);
++
++    if (!pThis->m_callbackFunction.IsEmpty()) {
++        pThis->m_callbackFunction.Dispose();
++        pThis->m_callbackFunction.Clear();
++    }
++
++    // Set m_canceled=true here in case this callback fn is being disposed 
++    // while we're executing the callback function itself NOV-35217
++    pThis->m_canceled = true;
++}
++#else // USE(V8)
++
++#endif // USE(V8)
++
++int PalmServiceBridge::token()
++{
++    return (int)listenerToken;
++}
++
++int PalmServiceBridge::call(const String& uri, const String& payload, ExceptionCode& ec)
++{
++    const char* callerId = 0;
++    bool usePrivateBus = false;
++
++    JSValue identifier;
++    ExecState* exec = 0;
++
++    if (document()->frame()) {
++
++        ScriptController* script = document()->frame()->script();
++        if (script) {
++            identifier = script->executeScript(ScriptSourceCode("PalmSystem && PalmSystem.getIdentifier()")).jsValue();
++            JSGlobalObject* globalObject = document()->frame()->script()->bindingRootObject()->globalObject();
++            exec = globalObject->globalExec();
++        }
++        usePrivateBus = true;
++    }
++
++    /*
++     *  Determine here whether the caller is privileged or not (public or private bus access. This is because 
++     *  LunaServiceManagerListener doesn't expose a way to get to the document() fn of this object, and there's no RTTI
++     *  on this platform to do a safe cast back up to PalmServiceBridge.
++     * 
++     * Instead, overloading LunaServiceManager::call() with a parameter to specify bus type...
++     */
++
++
++    LunaServiceManager::instance()->call(uri.utf8().data(), payload.utf8().data(), this, identifier.toString(exec)->value(exec).utf8().data(), usePrivateBus);
++    if (LSMESSAGE_TOKEN_INVALID == listenerToken) {
++        ExceptionCode ec;
++        cancel(ec);
++    }
++
++    return (int)listenerToken;
++}
++
++void PalmServiceBridge::serviceResponse(const char* body)
++{
++    if (m_canceled || !document())
++        return;
++
++    if (!body)
++        body = "";
++
++    Frame* frame = document()->frame();
++
++#if USE(V8)
++
++
++    // Protect this object so it does not get collected when we call into V8.
++    // V8 is free to do garbage collection anytime we asked it to allocate anything,
++    // which will be first when the argument string is allocated below.
++    ref();
++    ScriptController* script = frame->script();
++
++    script->gcProtectJSWrapper(this);
++    m_inServiceCallback = true;
++
++    if (!body)
++        body = "";
++
++    if (!m_callbackFunction.IsEmpty() && m_callbackFunction->IsFunction()) {
++
++        if (script->canExecuteScripts(AboutToExecuteScript)) {
++            v8::Local<v8::Context> context = V8Proxy::context(frame);
++            if (!context.IsEmpty()) {
++                v8::Context::Scope scope(context);
++                V8Proxy* proxy = V8Proxy::retrieve(frame);
++
++                v8::Local<v8::Value> args = v8::String::New(body);
++
++                // Script timeout is handled in the proxy.
++                if (!m_callbackFunction.IsEmpty())
++                    proxy->callFunction(v8::Persistent<v8::Function>::Cast(m_callbackFunction),
++                            context->Global(), 1, &args);
++            }
++        }
++
++        if (!m_subscribed) {
++            ExceptionCode ec;
++            cancel(ec);
++        }
++    }
++
++    m_inServiceCallback = false;
++    script->gcUnprotectJSWrapper(this);
++    deref();
++
++    Document::updateStyleForAllDocuments();
++
++#else
++    JSGlobalObject* globalObject = frame->script()->bindingRootObject()->globalObject();
++    ExecState* exec = globalObject->globalExec();
++
++    JSC::JSLock lock;
++
++    const JSEventListener* listener = JSEventListener::cast(m_callbackFunction.get());
++    JSObject* function = 0;
++    if (listener)
++        function = listener->jsFunction(scriptExecutionContext()); 
++    if (!function)
++        return;
++    CallData callData;
++    CallType callType = JSFunction::getCallData(function, callData);
++
++    if (callType == CallTypeNone)
++        return;
++
++    MarkedArgumentBuffer args;
++    args.append(jsString(exec, String::fromUTF8(body)));
++
++    globalObject->globalData().timeoutChecker.start();
++    JSC::call(exec, function, callType, callData, function, args);
++    globalObject->globalData().timeoutChecker.stop();
++
++    if (exec->hadException())
++        reportCurrentException(exec);
++
++    Document::updateStyleForAllDocuments();
++#endif
++}
++
++void PalmServiceBridge::cancel(ExceptionCode& ec)
++{
++    if (m_canceled)
++        return;
++
++    m_canceled = true;
++    if (listenerToken)
++        LunaServiceManager::instance()->cancel(this);
++
++#if USE(V8)
++    if (!m_callbackFunction.IsEmpty()) {
++        m_callbackFunction.Dispose();
++        m_callbackFunction.Clear();
++    }
++#endif // USE(V8)   
++}
++
++void PalmServiceBridge::stop()
++{
++    ExceptionCode ec;
++    cancel(ec);
++}
++
++bool PalmServiceBridge::canSuspend() const
++{
++    return false;
++}
++
++void PalmServiceBridge::contextDestroyed()
++{
++#if USE(V8)
++    ASSERT(m_callbackFunction.IsEmpty());
++#endif
++    ActiveDOMObject::contextDestroyed();
++}
++
++ScriptExecutionContext* PalmServiceBridge::scriptExecutionContext() const
++{
++    return ActiveDOMObject::scriptExecutionContext();
++}
++
++Document* PalmServiceBridge::document() const
++{
++    ASSERT(scriptExecutionContext()->isDocument());
++    return static_cast<Document*>(scriptExecutionContext());
++}
++
++
++}
++
++#endif
+diff --git a/Source/WebCore/platform/webos/PalmServiceBridge.h b/Source/WebCore/platform/webos/PalmServiceBridge.h
+new file mode 100644
+index 0000000..83f723f
+--- /dev/null
++++ b/Source/WebCore/platform/webos/PalmServiceBridge.h
+@@ -0,0 +1,89 @@
++#ifndef PalmServiceBridge_h
++#define PalmServiceBridge_h
++
++#ifdef ENABLE(PALM_SERVICE_BRIDGE)
++
++#include "ActiveDOMObject.h"
++#include "Event.h"
++#include "EventListener.h"
++#include "EventTarget.h"
++#include "LunaServiceMgr.h"
++#include <wtf/OwnPtr.h>
++
++#if USE(V8)
++#include "v8.h"
++#else
++#include <heap/Strong.h>
++#include <heap/StrongInlines.h>
++#endif
++
++#include <glib.h>
++#include <list>
++
++
++namespace WebCore {
++
++class Document;
++
++
++class PalmServiceBridge : public RefCounted<PalmServiceBridge>,
++                          public LunaServiceManagerListener,
++                          public ActiveDOMObject {
++    public:
++        static PassRefPtr<PalmServiceBridge> create(ScriptExecutionContext* context, bool subscribe = false) { return adoptRef(new PalmServiceBridge(context, subscribe)); }
++        bool init(Document*, bool subscribed = false);
++        ~PalmServiceBridge();
++
++        static int numHandlesForUrl(const char* appId);
++        static void handlesForUrl(const char* appId, std::list<PalmServiceBridge*>& outHandles);
++
++        virtual PalmServiceBridge* toPalmServiceBridge() { return this; }
++
++        static void detachServices(Document*);
++        static void cancelServices(Document*);
++
++        String version();
++
++        int token();
++
++        int call(const String& uri, const String& payload, ExceptionCode&);
++        void cancel(ExceptionCode&);
++
++        // callback from LunaServiceManagerListener
++        virtual void serviceResponse(const char* body);
++
++        Document* document() const;
++
++#if USE(V8)     
++        static void WeakRefCallback(v8::Persistent<v8::Value>, void* parameter);
++        void setOnservicecallback(v8::Handle<v8::Function>);
++#else
++        void setOnservicecallback(PassRefPtr<EventListener> eventListener) { m_callbackFunction = eventListener; }
++        EventListener* onservicecallback() const { return m_callbackFunction.get(); }
++#endif      
++
++        virtual ScriptExecutionContext* scriptExecutionContext() const;
++
++        // ActiveDOMObject:
++        virtual void contextDestroyed();
++        virtual bool canSuspend() const;
++        virtual void stop();
++
++    private:
++#if USE(V8)
++        v8::Persistent<v8::Function> m_callbackFunction;
++#else
++        RefPtr<EventListener> m_callbackFunction;
++#endif
++        bool m_canceled;
++        bool m_subscribed;
++        bool m_inServiceCallback;
++
++        PalmServiceBridge(ScriptExecutionContext*, bool);
++        PalmServiceBridge();
++};
++
++}
++
++#endif
++#endif
+diff --git a/Source/WebCore/platform/webos/PalmServiceBridge.idl b/Source/WebCore/platform/webos/PalmServiceBridge.idl
+new file mode 100644
+index 0000000..f8fc656
+--- /dev/null
++++ b/Source/WebCore/platform/webos/PalmServiceBridge.idl
+@@ -0,0 +1,19 @@
++    interface [
++        ActiveDOMObject,
++        Constructor,
++        Conditional=PALM_SERVICE_BRIDGE,
++        CallWith=ScriptExecutionContext
++            ] PalmServiceBridge {
++
++        // event handler attributes
++        attribute EventListener onservicecallback;
++        readonly attribute unsigned long token;
++
++        // request
++        unsigned long call(in DOMString method, in DOMString url)
++            raises(DOMException);
++
++        void cancel()
++            raises(DOMException);
++    };
++
+diff --git a/Tools/qmake/mkspecs/features/features.prf b/Tools/qmake/mkspecs/features/features.prf
+index 8849025..19afc4a 100644
+--- a/Tools/qmake/mkspecs/features/features.prf
++++ b/Tools/qmake/mkspecs/features/features.prf
+@@ -139,6 +139,10 @@ defineTest(detectFeatures) {
+     # Minibrowser must be able to query for QtTestSupport
+     build?(qttestsupport): WEBKIT_CONFIG += have_qttestsupport
+ 
++    enable?(PALM_SERVICE_BRIDGE) {
++        FEATURES_DEFINES_JAVASCRIPT += ENABLE_PALM_SERVICE_BRIDGE=1
++    }
++
+     # ---------------- Sanitize features -------------------
+ 
+     export(WEBKIT_CONFIG)
+diff --git a/Tools/qmake/mkspecs/features/features.pri b/Tools/qmake/mkspecs/features/features.pri
+index c368892..d904267 100644
+--- a/Tools/qmake/mkspecs/features/features.pri
++++ b/Tools/qmake/mkspecs/features/features.pri
+@@ -116,3 +116,4 @@ FEATURE_DEFAULTS = \
+     ENABLE_WORKERS=1 \
+     ENABLE_XHR_TIMEOUT=1 \
+     ENABLE_XSLT=0 \
++    ENABLE_PALM_SERVICE_BRIDGE=1 \
+-- 
+1.7.4.1
+
