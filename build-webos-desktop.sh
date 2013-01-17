@@ -484,8 +484,11 @@ function build_luna-sysmgr-ipc
 
     ##### To build from your local clone of luna-sysmgr-ipc, change the following line to "cd" to your clone's location
     cd $BASE/luna-sysmgr-ipc
-
-    make -e PREFIX=$LUNA_STAGING -f Makefile.Ubuntu install BUILD_TYPE=release
+    mkdir build
+    cd build
+    $CMAKE -D WEBOS_INSTALL_ROOT:PATH=${LUNA_STAGING} ..
+    make $JOBS
+    make install
 }
 
 ###########################################
@@ -497,13 +500,11 @@ function build_luna-sysmgr-ipc-messages
 
      ##### To build from your local clone of luna-sysmgr-ipc-messages, change the following line to "cd" to your clone's location
     cd $BASE/luna-sysmgr-ipc-messages
-
-    if [ -d include/public/messages ] ; then
-        mkdir -p $LUNA_STAGING/include/sysmgr-ipc
-        cp -f include/public/messages/*.h $LUNA_STAGING/include/sysmgr-ipc
-    else
-        make -e PREFIX=$LUNA_STAGING -f Makefile.Ubuntu install BUILD_TYPE=release
-    fi
+    mkdir build
+    cd build
+    $CMAKE -D WEBOS_INSTALL_ROOT:PATH=${LUNA_STAGING} ..
+    make $JOBS
+    make install
 }
 
 #################################
