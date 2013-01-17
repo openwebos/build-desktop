@@ -379,6 +379,15 @@ function fetch_qt5_module
     else
         echo "Using top of 'stable' branch from ${1}"
     fi
+
+    if [ -e ${SCRIPT_BASE_DIR}/${1} ] ; then
+        echo "Patching qtmodule ${1} ..."
+        for file in ${SCRIPT_BASE_DIR}/${1}/*
+        do
+            echo "-- Applying patch ${file}"
+            git am ${file}
+        done
+    fi
     cd $BASE
 }
 

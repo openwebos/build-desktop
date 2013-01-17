@@ -28,3 +28,4 @@ source ./customize/local.sh
 
 export ROOTFS="${BASE}/rootfs"
 export LUNA_STAGING="${BASE}/staging"
+export SCRIPT_BASE_DIR=${PWD}
