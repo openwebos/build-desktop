@@ -1510,7 +1510,7 @@ build webappmanager 3
 
 build luna-init 1.03
 build luna-prefs 1.01
-build luna-sysservice 1.04
+build luna-sysservice 2
 build librolegen 16
 ##build serviceinstaller 1.01
 build luna-universalsearchmgr 1.00
