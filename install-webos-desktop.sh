@@ -25,8 +25,7 @@
 
 set -x
 
-export BASE="${HOME}/luna-desktop-binaries"
-export ROOTFS="${BASE}/rootfs"
+source ./webos-desktop-common.sh
 
 if [ "$1" = "--help" ] ; then
     echo "Usage: sudo ./install-luna-sysmgr.sh [OPTION]"
