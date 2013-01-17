@@ -74,10 +74,8 @@ else
   set -e
 fi
 
+source ./webos-desktop-common.sh
 
-export BASE="${HOME}/luna-desktop-binaries"
-export ROOTFS="${BASE}/rootfs"
-export LUNA_STAGING="${BASE}/staging"
 mkdir -p ${BASE}/tarballs
 mkdir -p ${LUNA_STAGING}
 mkdir -p ${LUNA_STAGING}/usr/lib
@@ -1507,7 +1505,6 @@ build luna-sysmgr $LSM_TAG
 build keyboard-efigs 1.02
 
 build webappmanager 3
-
 build luna-init 1.03
 build luna-prefs 1.01
 build luna-sysservice 2

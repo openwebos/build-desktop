@@ -19,9 +19,7 @@
 
 set -x
 
-BASE="${HOME}/luna-desktop-binaries"
-ROOTFS="${BASE}/rootfs"
-LUNA_STAGING="${BASE}/staging"
+source ./webos-desktop-common.sh
 
 STAGING_DIR="${LUNA_STAGING}"
 BIN_DIR="${STAGING_DIR}/bin"
