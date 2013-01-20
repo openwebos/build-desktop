@@ -482,11 +482,15 @@ function build_luna-sysmgr-ipc
 
     ##### To build from your local clone of luna-sysmgr-ipc, change the following line to "cd" to your clone's location
     cd $BASE/luna-sysmgr-ipc
-    mkdir build
+    mkdir -p build
     cd build
     $CMAKE -D WEBOS_INSTALL_ROOT:PATH=${LUNA_STAGING} ..
     make $JOBS
     make install
+
+    ## support components which don't use pkgconfig
+    mkdir -p $LUNA_STAGING/include/sysmgr-ipc
+    cp -f $LUNA_STAGING/usr/include/sysmgr-ipc/*.h $LUNA_STAGING/include/sysmgr-ipc/
 }
 
 ###########################################
@@ -498,11 +502,15 @@ function build_luna-sysmgr-ipc-messages
 
      ##### To build from your local clone of luna-sysmgr-ipc-messages, change the following line to "cd" to your clone's location
     cd $BASE/luna-sysmgr-ipc-messages
-    mkdir build
+    mkdir -p build
     cd build
     $CMAKE -D WEBOS_INSTALL_ROOT:PATH=${LUNA_STAGING} ..
     make $JOBS
     make install
+
+    ## support components which don't use pkgconfig
+    mkdir -p $LUNA_STAGING/include/sysmgr-ipc
+    cp -f $LUNA_STAGING/usr/include/sysmgr-ipc/*.h $LUNA_STAGING/include/sysmgr-ipc/
 }
 
 #################################
@@ -1498,8 +1506,8 @@ build npapi-headers 0.4
 build luna-webkit-api 1.01
 build webkit 0.54
 
-build luna-sysmgr-ipc 1.01
-build luna-sysmgr-ipc-messages 1.02
+build luna-sysmgr-ipc 2
+build luna-sysmgr-ipc-messages 2
 build luna-sysmgr-common 3
 build luna-sysmgr $LSM_TAG
 build keyboard-efigs 1.02
