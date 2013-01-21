@@ -17,7 +17,7 @@
 #
 # LICENSE@@@
 
-VERSION=7.7
+VERSION=8.0
 
 PROCS=`grep -c processor /proc/cpuinfo`
 
@@ -74,7 +74,16 @@ else
   set -e
 fi
 
+export SCRIPT_DIR=$PWD
+
 source ./webos-desktop-common.sh
+
+if [ -d customize ] ; then
+    if [ ! -e customize/locations.sh ] ; then
+        cp -f locations.sh.default customize/locations.sh
+    fi
+    source ./customize/locations.sh
+fi
 
 mkdir -p ${BASE}/tarballs
 mkdir -p ${LUNA_STAGING}
@@ -83,7 +92,6 @@ mkdir -p ${LUNA_STAGING}/usr/lib
 export BEDLAM_ROOT="${BASE}/staging"
 export JAVA_HOME=/usr/lib/jvm/java-6-sun
 export JDKROOT=${JAVA_HOME}
-export SCRIPT_DIR=$PWD
 # old builds put .pc files in lib/pkgconfig; cmake-modules-webos puts them in usr/share/pkgconfig
 export PKG_CONFIG_PATH=$LUNA_STAGING/lib/pkgconfig:$LUNA_STAGING/usr/share/pkgconfig
 export MAKEFILES_DIR=$BASE/pmmakefiles
@@ -174,6 +182,31 @@ do_fetch() {
 }
 
 ####################################
+#  Change source dir to $2 if valid, otherwise to $1
+#
+#  First parameter is the standard source location
+#      (mandatory parameter)
+#
+#  Second parameter (if not empty) is the custom source location for the component.
+#      This is loaded from the "customize/locations.sh" file.
+#      Note: This file will be created when the build script is first run if not present
+#
+####################################
+function set_source_dir
+{
+    if [ -n "$2" ] ; then
+        if [ -d "$2" ] ; then
+            cd $2
+        else
+            echo "Folder $2 invalid or doesn't exist"
+            exit 1
+        fi
+    else
+        cd $1
+    fi
+}
+
+####################################
 #  Fetch and unpack (or build) cmake
 ####################################
 function build_cmake
@@ -229,7 +262,7 @@ function build_cmake-modules-webos
 function build_cjson
 {
     do_fetch openwebos/cjson $1 cjson submissions/
-    cd $BASE/cjson
+    set_source_dir $BASE/cjson  $CJSON_DIR
     
     sh autogen.sh
     mkdir -p build
@@ -246,7 +279,7 @@ function build_cjson
 function build_pbnjson
 {
     do_fetch openwebos/libpbnjson $1 pbnjson submissions/
-    cd $BASE/pbnjson
+    set_source_dir $BASE/pbnjson  $PBNJSON_DIR
     
     mkdir -p build
     cd build
@@ -269,7 +302,7 @@ function build_pbnjson
 function build_pmloglib
 {
     do_fetch openwebos/pmloglib $1 pmloglib submissions/
-    cd $BASE/pmloglib
+    set_source_dir $BASE/pmloglib  $PMLOGLIB_DIR
     
     mkdir -p build
     cd build
@@ -284,7 +317,10 @@ function build_pmloglib
 function build_nyx-lib
 {
     do_fetch openwebos/nyx-lib $1 nyx-lib submissions/
-    mkdir -p $BASE/nyx-lib/build
+
+    set_source_dir $BASE/nyx-lib $NYX_LIB_DIR
+
+    mkdir -p build
     cd $BASE/nyx-lib/build
     $CMAKE .. -DNO_TESTS=True -DNO_UTILS=True -DCMAKE_INSTALL_PREFIX=${LUNA_STAGING} -DCMAKE_BUILD_TYPE=Release
     make $JOBS
@@ -332,8 +368,7 @@ function build_luna-service2
 {
     do_fetch openwebos/luna-service2 $1 luna-service2 submissions/
 
-    ##### To build from your local clone of luna-service, change the following line to "cd" to your clone's location
-    cd $BASE/luna-service2
+    set_source_dir $BASE/luna-service2 $LUNA_SERVICE2_DIR
 
     mkdir -p build
     cd build
@@ -364,8 +399,7 @@ function build_npapi-headers
 {
     do_fetch isis-project/npapi-headers $1 npapi-headers
 
-    ##### To build from your local clone of npapi-headers, change the following line to "cd" to your clone's location
-    cd $BASE/npapi-headers
+    set_source_dir $BASE/npapi-headers  $NPAPI_HEADERS_DIR
 
     mkdir -p $LUNA_STAGING/include/webkit/npapi
     cp -f *.h $LUNA_STAGING/include/webkit/npapi
@@ -378,8 +412,7 @@ function build_isis-fonts
 {
     do_fetch isis-project/isis-fonts $1 isis-fonts
 
-    ##### To build from your local clone of isis-fonts, change the following line to "cd" to your clone's location
-    cd $BASE/isis-fonts
+    set_source_dir $BASE/isis-fonts  $ISIS_FONTS_DIR
 
     mkdir -p $ROOTFS/usr/share/fonts
     cp -f *.xml $ROOTFS/usr/share/fonts
@@ -393,8 +426,7 @@ function build_luna-webkit-api
 {
     do_fetch openwebos/luna-webkit-api $1 luna-webkit-api submissions/
 
-    ##### To build from your local clone of luna-webkit-api, change the following line to "cd" to your clone's location
-    cd $BASE/luna-webkit-api
+    set_source_dir $BASE/luna-webkit-api  $LUNA_WEBKIT_API_DIR
 
     mkdir -p $LUNA_STAGING/include/ime
     if [ -d include/public/ime ] ; then
@@ -480,8 +512,8 @@ function build_luna-sysmgr-ipc
 {
     do_fetch openwebos/luna-sysmgr-ipc $1 luna-sysmgr-ipc submissions/
 
-    ##### To build from your local clone of luna-sysmgr-ipc, change the following line to "cd" to your clone's location
-    cd $BASE/luna-sysmgr-ipc
+    set_source_dir $BASE/luna-sysmgr-ipc  $LUNA_SYSMGR_IPC_DIR
+
     mkdir -p build
     cd build
     $CMAKE -D WEBOS_INSTALL_ROOT:PATH=${LUNA_STAGING} ..
@@ -500,8 +532,8 @@ function build_luna-sysmgr-ipc-messages
 {
     do_fetch openwebos/luna-sysmgr-ipc-messages $1 luna-sysmgr-ipc-messages submissions/
 
-     ##### To build from your local clone of luna-sysmgr-ipc-messages, change the following line to "cd" to your clone's location
-    cd $BASE/luna-sysmgr-ipc-messages
+    set_source_dir $BASE/luna-sysmgr-ipc-messages  $LUNA_SYSMGR_IPC_MESSAGES_DIR
+
     mkdir -p build
     cd build
     $CMAKE -D WEBOS_INSTALL_ROOT:PATH=${LUNA_STAGING} ..
@@ -520,8 +552,8 @@ function build_luna-prefs
 {
     do_fetch openwebos/luna-prefs $1 luna-prefs submissions/
 
-    ##### To build from your local clone of luna-prefs, change the following line to "cd" to your clone's location
-    cd $BASE/luna-prefs
+    set_source_dir $BASE/luna-prefs $LUNA_PREFS_DIR
+
     mkdir -p $BASE/luna-prefs/build
     cd $BASE/luna-prefs/build
     $CMAKE -D WEBOS_INSTALL_ROOT:PATH=${LUNA_STAGING} ..
@@ -536,14 +568,16 @@ function build_luna-prefs
 function build_luna-init
 {
     do_fetch openwebos/luna-init $1 luna-init submissions/
+    
+    set_source_dir $BASE/luna-init $LUNA_INIT_DIR
 
-    mkdir -p $BASE/luna-init/build
-    cd $BASE/luna-init/build
+    mkdir -p build
+    cd build
     $CMAKE -D WEBOS_INSTALL_ROOT:PATH=${LUNA_STAGING} -DCMAKE_INSTALL_PREFIX=${LUNA_STAGING} ..
 
     make $JOBS
     make install
-    cp -f $BASE/luna-init/files/conf/*.json $ROOTFS/usr/palm/
+    cp -f ../files/conf/*.json $ROOTFS/usr/palm/
 
     if [ -e ../files/conf/fonts/fonts.tgz ]; then
         mkdir -p $ROOTFS/usr/share/fonts
@@ -559,8 +593,7 @@ function build_luna-sysservice
 {
     do_fetch openwebos/luna-sysservice $1 luna-sysservice submissions/
 
-    ##### To build from your local clone of luna-sysservice, change the following line to "cd" to your clone's location
-    cd $BASE/luna-sysservice
+    set_source_dir $BASE/luna-sysservice  $LUNA_SYSSERVICE_DIR
 
     mkdir -p build
     cd build
@@ -602,8 +635,7 @@ function build_core-apps
 {
     do_fetch openwebos/core-apps $1 core-apps submissions/
 
-    ##### To build from your local clone of core-apps, change the following line to "cd" to your clone's location
-    cd $BASE/core-apps
+    set_source_dir $BASE/core-apps  $CORE_APPS_DIR
 
     mkdir -p $ROOTFS/usr/palm/applications
     for APP in com.palm.app.* ; do
@@ -621,8 +653,7 @@ function build_luna-applauncher
 {
     do_fetch openwebos/luna-applauncher $1 luna-applauncher submissions/
 
-    ##### To build from your local clone of luna-applauncher, change the following line to "cd" to your clone's location
-    cd $BASE/luna-applauncher
+    set_source_dir $BASE/luna-applauncher  $LUNA_APPLAUNCHER_DIR
 
     mkdir -p $ROOTFS/usr/lib/luna/system/luna-applauncher
     cp -rf . $ROOTFS/usr/lib/luna/system/luna-applauncher
@@ -635,8 +666,7 @@ function build_luna-systemui
 {
     do_fetch openwebos/luna-systemui $1 luna-systemui submissions/
 
-    ##### To build from your local clone of luna-systemui, change the following line to "cd" to your clone's location
-    cd $BASE/luna-systemui
+    set_source_dir $BASE/luna-systemui $LUNA_SYSTEMUI_DIR
 
     mkdir -p $ROOTFS/usr/lib/luna/system/luna-systemui
     cp -rf . $ROOTFS/usr/lib/luna/system/luna-systemui
@@ -652,7 +682,9 @@ function build_luna-systemui
 function build_foundation-frameworks
 {
     do_fetch openwebos/foundation-frameworks $1 foundation-frameworks
-    cd $BASE/foundation-frameworks
+
+    set_source_dir $BASE/foundation-frameworks  $FOUNDATION_FRAMEWORKS_DIR
+
     mkdir -p $ROOTFS/usr/palm/frameworks/
     for FRAMEWORK in `ls -d1 foundations*` ; do
       mkdir -p $ROOTFS/usr/palm/frameworks/$FRAMEWORK/version/1.0/
@@ -666,7 +698,9 @@ function build_foundation-frameworks
 function build_mojoservice-frameworks
 {
     do_fetch openwebos/mojoservice-frameworks $1 mojoservice-frameworks
-    cd $BASE/mojoservice-frameworks
+
+    set_source_dir $BASE/mojoservice-frameworks $MOJOSERVICE_FRAMEWORKS_DIR
+
     mkdir -p $ROOTFS/usr/palm/frameworks/
     for FRAMEWORK in `ls -d1 mojoservice*` ; do
       mkdir -p $ROOTFS/usr/palm/frameworks/$FRAMEWORK/version/1.0/
@@ -680,7 +714,9 @@ function build_mojoservice-frameworks
 function build_loadable-frameworks
 {
     do_fetch openwebos/loadable-frameworks $1 loadable-frameworks
-    cd $BASE/loadable-frameworks
+
+    set_source_dir $BASE/loadable-frameworks  $LOADABLE_FRAMEWORKS_DIR
+
     mkdir -p $ROOTFS/usr/palm/frameworks/
     for FRAMEWORK in `ls -d1 calendar* contacts globalization` ; do
       mkdir -p $ROOTFS/usr/palm/frameworks/$FRAMEWORK/version/1.0/
@@ -740,8 +776,8 @@ function build_mojolocation-stub
 {
     do_fetch openwebos/mojolocation-stub $1 mojolocation-stub submissions/
 
-    ##### To build from your local clone of mojolocation-stub, change the following line to "cd" to your clone's location
-    cd $BASE/mojolocation-stub
+    set_source_dir $BASE/mojolocation-stub  $MOJOLOCATION_DIR
+
     mkdir -p $ROOTFS/usr/palm/services/com.palm.location
     cp -rf *.json *.js $ROOTFS/usr/palm/services/com.palm.location
     cp -rf files/sysbus/*.json $ROOTFS/usr/share/ls2/roles/prv
@@ -758,8 +794,8 @@ function build_pmnetconfigmanager-stub
 {
     do_fetch openwebos/pmnetconfigmanager-stub $1 pmnetconfigmanager-stub submissions/
 
-    ##### To build from your local clone of pmnetconfigmanager-stub, change the following line to "cd" to your clone's location
-    cd $BASE/pmnetconfigmanager-stub
+    set_source_dir $BASE/pmnetconfigmanager-stub  $PMNETCONFIGMANAGER_DIR
+
     mkdir -p $ROOTFS/usr/palm/services/com.palm.connectionmanager
     cp -rf *.json *.js $ROOTFS/usr/palm/services/com.palm.connectionmanager
     cp -rf files/sysbus/*.json $ROOTFS/usr/share/ls2/roles/prv
@@ -776,8 +812,8 @@ function build_app-services
 {
     do_fetch openwebos/app-services $1 app-services
 
-    ##### To build from your local clone of app-services, change the following line to "cd" to your clone's location
-    cd $BASE/app-services
+    set_source_dir $BASE/app-services $APP_SERVICES_DIR
+
     rm -rf mojomail
     mkdir -p $ROOTFS/usr/palm/services
 
@@ -814,8 +850,8 @@ function build_app-services
 function build_mojomail
 {
     do_fetch openwebos/mojomail $1 mojomail submissions/
-    ##### To build from your local clone of mojomail, change the following line to "cd" to your clone's location
-    cd $BASE/mojomail
+
+    set_source_dir $BASE/mojomail  $MOJOMAIL_DIR
 
     for SUBDIR in common imap pop smtp ; do
       mkdir -p $BASE/mojomail/$SUBDIR/build
@@ -854,8 +890,7 @@ function build_luna-sysmgr-common
 {
     do_fetch openwebos/luna-sysmgr-common $1 luna-sysmgr-common submissions/
 
-    ##### To build from your local clone of luna-sysmgr, change the following line to "cd" to your clone's location
-    cd $BASE/luna-sysmgr-common
+    set_source_dir $BASE/luna-sysmgr-common  $LUNA_SYSMGR_COMMON_DIR
 
     if [ ! -e "luna-desktop-build-${1}.stamp" ] ; then
         if [ $SKIPSTUFF -eq 0 ] && [ -e debug-x86 ] && [ -e debug-x86/.obj ] ; then
@@ -881,8 +916,7 @@ function build_webappmanager
 {
     do_fetch openwebos/webappmanager $1 webappmanager submissions/
 
-##### To build from your local clone of webappmgr, change the following line to "cd" to your clone's location
-    cd $BASE/webappmanager
+    set_source_dir $BASE/webappmanager $WEBAPPMANAGER_DIR
 
     if [ ! -e "luna-desktop-build-${1}.stamp" ] ; then
         if [ $SKIPSTUFF -eq 0 ] && [ -e debug-x86 ] && [ -e debug-x86/.obj ] ; then
@@ -912,8 +946,7 @@ function build_luna-sysmgr
         do_fetch openwebos/luna-sysmgr $1 luna-sysmgr submissions/
     fi
 
-    ##### To build from your local clone of luna-sysmgr, change the following line to "cd" to your clone's location
-    cd $BASE/luna-sysmgr
+    set_source_dir $BASE/luna-sysmgr  $LUNA_SYSMGR_DIR
 
     if [ ! -e "luna-desktop-build-${1}.stamp" ] ; then
         if [ $SKIPSTUFF -eq 0 ] && [ -e debug-x86 ] && [ -e debug-x86/.obj ] ; then
@@ -999,8 +1032,7 @@ function build_keyboard-efigs
 {
     do_fetch openwebos/keyboard-efigs $1 keyboard-efigs submissions/
 
-    ##### To build from your local clone of keyboard-efigs, change the following line to "cd" to your clone's location
-    cd $BASE/keyboard-efigs
+    set_source_dir $BASE/keyboard-efigs  $KEYBOARD_EFIGS_DIR
 
     $LUNA_STAGING/bin/qmake-palm
     make $JOBS -f Makefile.Ubuntu
@@ -1014,8 +1046,7 @@ function build_WebKitSupplemental
 {
     do_fetch isis-project/WebKitSupplemental $1 WebKitSupplemental
 
-    ##### To build from your local clone of WebKitSupplemental, change the following line to "cd" to your clone's location
-    cd $BASE/WebKitSupplemental
+    set_source_dir $BASE/WebKitSupplemental  $WEBKITSUPPLEMENTAL_DIR
 
     export QTDIR=$BASE/qt-build-desktop
     export QMAKE=$LUNA_STAGING/bin/qmake-palm
@@ -1036,8 +1067,7 @@ function build_AdapterBase
 {
     do_fetch isis-project/AdapterBase $1 AdapterBase
 
-    ##### To build from your local clone of AdapterBase, change the following line to "cd" to your clone's location
-    cd $BASE/AdapterBase
+    set_source_dir $BASE/AdapterBase  $ADAPTERBASE_DIR
 
     export QMAKE=$LUNA_STAGING/bin/qmake-palm
     export QMAKEPATH=$WEBKIT_DIR/Tools/qmake
@@ -1054,8 +1084,7 @@ function build_isis-browser
 {
     do_fetch isis-project/isis-browser $1 isis-browser
 
-    ##### To build from your local clone of isis-browser, change the following line to "cd" to your clone's location
-    cd $BASE/isis-browser
+    set_source_dir $BASE/isis-browser  $ISIS_BROWSER_DIR
 
     mkdir -p $ROOTFS/etc/palm/db/kinds
     mkdir -p $ROOTFS/etc/palm/db/permissions
@@ -1078,7 +1107,8 @@ function build_BrowserServer
     cd ${LUNA_STAGING}/bin
     [ -x moc ] || ln -sf moc-palm moc
 
-    cd $BASE/BrowserServer
+    set_source_dir $BASE/BrowserServer  $BROWSERSERVER_DIR
+
     export QT_INSTALL_PREFIX=$LUNA_STAGING
     export STAGING_DIR=${LUNA_STAGING}
     export STAGING_INCDIR="${LUNA_STAGING}/include"
@@ -1099,8 +1129,7 @@ function build_BrowserAdapter
 {
     do_fetch isis-project/BrowserAdapter $1 BrowserAdapter
 
-    ##### To build from your local clone of BrowserAdapter, change the following line to "cd" to your clone's location
-    cd $BASE/BrowserAdapter
+    set_source_dir $BASE/BrowserAdapter  $BROWSERADAPTER_DIR
 
     export QT_INSTALL_PREFIX=$LUNA_STAGING
     export STAGING_DIR=${LUNA_STAGING}
@@ -1135,8 +1164,11 @@ function build_BrowserAdapter
 function build_nodejs
 {
     do_fetch openwebos/nodejs $1 nodejs submissions/
-    mkdir -p $BASE/nodejs/build
-    cd $BASE/nodejs/build
+
+    set_source_dir $BASE/nodejs $NODEJS_DIR
+
+    mkdir -p build
+    cd build
     $CMAKE .. -DNO_TESTS=True -DNO_UTILS=True -DCMAKE_INSTALL_PREFIX=${LUNA_STAGING} -DCMAKE_BUILD_TYPE=Release
     make $JOBS
     make install
@@ -1175,8 +1207,7 @@ function build_db8
 {
     do_fetch openwebos/db8 $1 db8 submissions/
 
-    ##### To build from your local clone of db8, change the following line to "cd" to your clone's location
-    cd $BASE/db8
+    set_source_dir $BASE/db8 $DB8_DIR
 
     mkdir -p build
     cd build
@@ -1207,8 +1238,7 @@ function build_configurator
 {
     do_fetch openwebos/configurator $1 configurator submissions/
 
-    ##### To build from your local clone of configurator, change the following line to "cd" to your clone's location
-    cd $BASE/configurator
+    set_source_dir $BASE/configurator  $CONFIGURATOR_DIR
 
     mkdir -p build
     cd build
@@ -1229,8 +1259,7 @@ function build_activitymanager
 {
     do_fetch openwebos/activitymanager $1 activitymanager submissions/
 
-    ##### To build from your local clone of activitymanager, change the following line to "cd" to your clone's location
-    cd $BASE/activitymanager
+    set_source_dir $BASE/activitymanager $ACTIVITYMANAGER_DIR
 
     mkdir -p build
     cd build
@@ -1255,8 +1284,11 @@ function build_activitymanager
 function build_pmstatemachineengine
 {
     do_fetch openwebos/pmstatemachineengine $1 pmstatemachineengine submissions/
-    mkdir -p $BASE/pmstatemachineengine/build
-    cd $BASE/pmstatemachineengine/build
+
+    set_source_dir $BASE/pmstatemachineengine  $PMSTATEMACHINEENGINE_DIR
+
+    mkdir -p build
+    cd build
     $CMAKE -D WEBOS_INSTALL_ROOT:PATH=${LUNA_STAGING} ..
     make $JOBS
     make install
@@ -1268,8 +1300,11 @@ function build_pmstatemachineengine
 function build_libpalmsocket
 {
     do_fetch openwebos/libpalmsocket $1 libpalmsocket submissions/
-    mkdir -p $BASE/libpalmsocket/build
-    cd $BASE/libpalmsocket/build
+
+    set_source_dir $BASE/libpalmsocket  $LIBPALMSOCKET_DIR
+
+    mkdir -p build
+    cd build
     $CMAKE -D WEBOS_INSTALL_ROOT:PATH=${LUNA_STAGING} ..
     make $JOBS
     make install
@@ -1315,8 +1350,7 @@ function build_librolegen
 {
     do_fetch openwebos/librolegen $1 librolegen submissions/
 
-    ##### To build from your local clone of librolegen, change the following line to "cd" to your clone's location
-    cd $BASE/librolegen
+    set_source_dir $BASE/librolegen  $LIBROLEGEN_DIR
 
     mkdir -p build
     cd build
@@ -1331,9 +1365,8 @@ function build_librolegen
 function build_serviceinstaller
 {
     do_fetch openwebos/serviceinstaller $1 serviceinstaller submissions/
-    
-    ##### To build from your local clone of serviceinstaller, change the following line to "cd" to your clone's location
-    cd $BASE/serviceinstaller
+
+    set_source_dir $BASE/serviceinstaller  $SERVICEINSTALLER_DIR
 
     mkdir -p build
     cd build
@@ -1348,9 +1381,8 @@ function build_serviceinstaller
 function build_luna-universalsearchmgr
 {
     do_fetch openwebos/luna-universalsearchmgr $1 luna-universalsearchmgr submissions/
-    
-    ##### To build from your local clone of luna-universalsearchmgr, change the following line to "cd" to your clone's location
-    cd $BASE/luna-universalsearchmgr
+
+    set_source_dir $BASE/luna-universalsearchmgr  $LUNA_UNIVERSALSEARCHMGR_DIR
 
     mkdir -p build
     cd build
@@ -1374,8 +1406,11 @@ function build_luna-universalsearchmgr
 function build_filecache
 {
     do_fetch openwebos/filecache $1 filecache submissions/
-    mkdir -p $BASE/filecache/build
-    cd $BASE/filecache/build
+
+    set_source_dir $BASE/filecache  $FILECACHE_DIR
+
+    mkdir -p build
+    cd build
     export LDFLAGS="-Wl,-rpath-link $LUNA_STAGING/lib"
     $CMAKE -D WEBOS_INSTALL_ROOT:PATH=${LUNA_STAGING} -DCMAKE_INSTALL_PREFIX=${LUNA_STAGING} ..
     make $JOBS
@@ -1479,6 +1514,8 @@ set -x
 #  export SKIPSTUFF=0
 #fi
 
+pre_build
+
 export LSM_TAG="3"
 if [ ! -d "$BASE/luna-sysmgr" ] || [ ! -d "$BASE/tarballs" ] || [ ! -e "$BASE/tarballs/luna-sysmgr_${LSM_TAG}.zip" ] ; then
     do_fetch openwebos/luna-sysmgr ${LSM_TAG} luna-sysmgr submissions/
@@ -1563,6 +1600,8 @@ build filecache 55
 
 #NOTE: mojomail depends on libsandbox, libpalmsocket, and pmstatemachine;
 build mojomail 99
+
+post_build
 
 echo ""
 echo "Complete. "

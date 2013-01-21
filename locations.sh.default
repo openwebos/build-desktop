@@ -1,0 +1,149 @@
+#!/bin/bash
+# @@@LICENSE
+#
+#      Copyright (c) 2013 Hewlett-Packard Development Company, L.P.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# LICENSE@@@
+
+
+
+#######################################
+##
+##  This function is called after setup but before any components are built
+##
+#######################################
+function pre_build
+{
+##  This is a good place to add or change the setup parameters
+
+    echo "Call pre_build function"
+
+}
+
+
+#######################################
+##
+##  This function is called after all components have been built
+##
+#######################################
+function post_build
+{
+##  This is a good place to add additional components to the build
+
+    echo "Call post_build function"
+
+}
+
+
+###########################################
+##
+##  Use this area to set alternate locations for most of the components
+##  used in the build-webos-desktop script.
+##
+##  For example, you have cloned down a copy of webappmanager to
+##      ~/projects/github/webappmanager and ythe build-webos-desktop script
+##      sshould use that instead of the tagged version embedded in the script.
+##      Change the value of WEBAPPMANAGER_DIR
+##          from ${BASE}/webappmanager
+##          to   ${HOME}/projects/github/webappmanager
+##
+##
+##########################################
+
+# export ACTIVITYMANAGER_DIR="${BASE}/activitymanager"
+
+# export ADAPTERBASE_DIR="${BASE}/AdapterBase"
+
+# export APP_SERVICES_DIR="${BASE}/app-services"
+
+# export BROWSERADAPTER_DIR="${BASE}/BrowserAdapter"
+
+# export BROWSERSERVER_DIR="${BASE}/BrowserServer"
+
+# export CONFIGURATOR_DIR="${BASE}/configurator"
+
+# export CJSON_DIR="${BASE}/cjson"
+
+# export CORE_APPS_DIR="${BASE}/core-apps"
+
+# export FOUNDATION_FRAMEWORKS_DIR="${BASE}/foundation-frameworks"
+
+# export DB8_DIR="${BASE}/db8"
+
+# export FILECACHE_DIR="${BASE}/$BASE/filecache"
+
+# export ISIS_BROWSER_DIR="${BASE}/isis-browser"
+
+# export ISIS_FONTS_DIR="${BASE}/isis-fonts"
+
+# export KEYBOARD_EFIGS_DIR="${BASE}/keyboard-efigs"
+
+# export LIBPALMSOCKET_DIR="${BASE}/$BASE/libpalmsocket"
+
+# export LIBROLEGEN_DIR="${BASE}/librolegen"
+
+# export LOADABLE_FRAMEWORKS_DIR="${BASE}/loadable-frameworks"
+
+# export LUNA_APPLAUNCHER_DIR="${BASE}/luna-applauncher"
+
+# export LUNA_INIT_DIR="${BASE}/luna-init"
+
+# export LUNA_PREFS_DIR="${BASE}/luna-prefs"
+
+# export LUNA_SERVICE2_DIR="${BASE}/luna-service2"
+
+# export LUNA_SYSMGR_DIR="${BASE}/luna-sysmgr"
+
+# export LUNA_SYSMGR_COMMON_DIR="${BASE}/luna-sysmgr-common"
+
+# export LUNA_SYSMGR_IPC_DIR="${BASE}/luna-sysmgr-ipc"
+
+# export LUNA_SYSMGR_IPC_MESSAGES_DIR="${BASE}/luna-sysmgr-ipc-messages"
+
+# export LUNA_SYSSERVICE_DIR="${BASE}/luna-sysservice"
+
+# export LUNA_SYSTEMUI_DIR="${BASE}/luna-systemui"
+
+# export LUNA_UNIVERSALSEARCHMGR_DIR="${BASE}/luna-universalsearchmgr"
+
+# export LUNA_WEBKIT_API_DIR="${BASE}/luna-webkit-api"
+
+# export MOJOLOCATION_DIR="${BASE}/mojolocation-stub"
+
+# export MOJOMAIL_DIR="${BASE}/mojomail"
+
+# export MOJOSERVICE_FRAMEWORKS_DIR="${BASE}/mojoservice-frameworks"
+
+# export NODEJS_DIR="${BASE}/nodejs"
+
+# export NPAPI_HEADERS_DIR="${BASE}/npapi-headers"
+
+# export NYX_LIB_DIR="${BASE}/nyx-lib"
+
+# export PBNJSON_DIR="${BASE}/pbnjson"
+
+# export PMLOGLIB_DIR="${BASE}/pmloglib"
+
+# export PMNETCONFIGMANAGER_DIR="${BASE}/pmnetconfigmanager-stub"
+
+# export PMSTATEMACHINEENGINE_DIR="${BASE}/pmstatemachineengine"
+
+# export SERVICEINSTALLER_DIR="${BASE}/serviceinstaller"
+
+# export WEBAPPMANAGER_DIR="${BASE}/webappmanager"
+
+# export WEBKITSUPPLEMENTAL_DIR="${BASE}/WebKitSupplemental"
+
+

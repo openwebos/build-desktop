@@ -25,6 +25,8 @@
 
 set -x
 
+export SCRIPT_DIR=$PWD
+
 source ./webos-desktop-common.sh
 
 if [ "$1" = "--help" ] ; then
