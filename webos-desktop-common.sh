@@ -17,6 +17,14 @@
 #
 # LICENSE@@@
 
-export BASE="${HOME}/wk2-luna-desktop-binaries"
+if [ ! -d ./customize ] ; then
+    mkdir -p ./customize
+fi
+if [ ! -e ./customize/local.sh ] ; then
+    cp -f ./local.sh.default ./customize/local.sh
+fi
+
+source ./customize/local.sh
+
 export ROOTFS="${BASE}/rootfs"
 export LUNA_STAGING="${BASE}/staging"

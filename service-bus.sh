@@ -172,7 +172,10 @@ check_fs_attribute() {
 
 #########################################################
 
-BASE="${HOME}/luna-desktop-binaries"
+export SCRIPT_DIR=$PWD
+
+source ./webos-desktop-common.sh
+
 ROOTFS="${BASE}/rootfs"
 LUNA_STAGING="${BASE}/staging"
 STAGING_DIR="${LUNA_STAGING}"
@@ -197,7 +200,7 @@ if [ ! -f "${ROOTFS}/etc/ls2/ls-public.conf" ] || grep -qs dbus ${ROOTFS}/etc/ls
 fi
 
 
-SRC_DIR="${HOME}/luna-desktop-binaries/luna-sysmgr/desktop-support"
+SRC_DIR="${BASE}/luna-sysmgr/desktop-support"
 #LOGGING="--pmloglib"
 
 DEB_BUILD_MULTIARCH=$(dpkg-architecture -qDEB_BUILD_MULTIARCH)

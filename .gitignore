@@ -27,3 +27,6 @@ release-*/
 debug-*/
 patches/
 *debuglog.txt
+luna*/
+customize/
+

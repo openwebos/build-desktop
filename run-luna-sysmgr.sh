@@ -19,6 +19,8 @@
 
 set -x
 
+export SCRIPT_DIR=$PWD
+
 source ./webos-desktop-common.sh
 
 STAGING_DIR="${LUNA_STAGING}"
