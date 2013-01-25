@@ -1221,7 +1221,7 @@ function build_db8
 
     # The (cmake) "make install" (above) installs headers/libs (and everything else) into LUNA_STAGING.
     # Here, we install the executable and (desktop) ls2 files into $ROOTFS:
-    cd $BASE/db8
+    set_source_dir $BASE/db8 $DB8_DIR
     cp -f build/mojodb-luna "${ROOTFS}/usr/lib/luna/"
     cp -f desktop-support/com.palm.db.json.pub $ROOTFS/usr/share/ls2/roles/pub/com.palm.db.json
     cp -f desktop-support/com.palm.db.json.prv $ROOTFS/usr/share/ls2/roles/prv/com.palm.db.json
@@ -1516,7 +1516,7 @@ set -x
 
 pre_build
 
-export LSM_TAG="3"
+export LSM_TAG="5"
 if [ ! -d "$BASE/luna-sysmgr" ] || [ ! -d "$BASE/tarballs" ] || [ ! -e "$BASE/tarballs/luna-sysmgr_${LSM_TAG}.zip" ] ; then
     do_fetch openwebos/luna-sysmgr ${LSM_TAG} luna-sysmgr submissions/
 fi
@@ -1545,11 +1545,11 @@ build webkit 0.54
 
 build luna-sysmgr-ipc 2
 build luna-sysmgr-ipc-messages 2
-build luna-sysmgr-common 3
+build luna-sysmgr-common 4
 build luna-sysmgr $LSM_TAG
 build keyboard-efigs 1.02
 
-build webappmanager 3
+build webappmanager 4
 build luna-init 1.03
 build luna-prefs 1.01
 build luna-sysservice 2
@@ -1588,7 +1588,7 @@ build node-addon sysbus 25
 build node-addon pmlog 10
 build node-addon dynaload 11
 
-build db8 62
+build db8 63
 build configurator 49
 
 build activitymanager 110
