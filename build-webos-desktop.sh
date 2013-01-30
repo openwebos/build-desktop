@@ -1229,6 +1229,13 @@ function build_db8
     cp -f desktop-support/com.palm.db.service $ROOTFS/usr/share/ls2/system-services/com.palm.db.service
     cp -f desktop-support/com.palm.tempdb.service $ROOTFS/usr/share/ls2/system-services/com.palm.tempdb.service
     cp -f src/db-luna/mojodb.conf $ROOTFS/etc/palm/mojodb.conf
+
+    # copy lib and include files to from old location
+    rm -f ${LUNA_STAGING}/lib/libmojo*.so
+    ln -sf ${LUNA_STAGING}/usr/lib/libmojodb.so ${LUNA_STAGING}/lib/libmojodb.so
+    ln -sf ${LUNA_STAGING}/usr/lib/libmojocore.so ${LUNA_STAGING}/lib/libmojocore.so
+    ln -sf ${LUNA_STAGING}/usr/lib/libmojoluna.so ${LUNA_STAGING}/lib/libmojoluna.so
+    cp -fr ${LUNA_STAGING}/usr/include/mojodb ${LUNA_STAGING}/include
 }
 
 ##############################
