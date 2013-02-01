@@ -263,7 +263,7 @@ function build_cjson
 {
     do_fetch openwebos/cjson $1 cjson submissions/
     set_source_dir $BASE/cjson  $CJSON_DIR
-    
+
     sh autogen.sh
     mkdir -p build
     cd build
@@ -280,13 +280,13 @@ function build_pbnjson
 {
     do_fetch openwebos/libpbnjson $1 pbnjson submissions/
     set_source_dir $BASE/pbnjson  $PBNJSON_DIR
-    
+
     mkdir -p build
     cd build
     $CMAKE -D WEBOS_INSTALL_ROOT:PATH=${LUNA_STAGING} ..
     make $JOBS
     make install
-    
+
     # remove lib files from old location
     cd ${LUNA_STAGING}
     rm -f lib/libpbnjson*.so
@@ -303,7 +303,7 @@ function build_pmloglib
 {
     do_fetch openwebos/pmloglib $1 pmloglib submissions/
     set_source_dir $BASE/pmloglib  $PMLOGLIB_DIR
-    
+
     mkdir -p build
     cd build
     $CMAKE .. -DNO_TESTS=True -DNO_UTILS=True -DCMAKE_INSTALL_PREFIX=${LUNA_STAGING} -DCMAKE_BUILD_TYPE=Release
@@ -547,7 +547,7 @@ function build_luna-sysmgr-ipc-messages
 
 #################################
 # Fetch and build luna-prefs
-################################# 
+#################################
 function build_luna-prefs
 {
     do_fetch openwebos/luna-prefs $1 luna-prefs submissions/
@@ -564,11 +564,11 @@ function build_luna-prefs
 
 #################################
 # Fetch and build luna-init
-################################# 
+#################################
 function build_luna-init
 {
     do_fetch openwebos/luna-init $1 luna-init submissions/
-    
+
     set_source_dir $BASE/luna-init $LUNA_INIT_DIR
 
     mkdir -p build
@@ -588,8 +588,8 @@ function build_luna-init
 
 #################################
 # Fetch and build luna-sysservice
-################################# 
-function build_luna-sysservice 
+#################################
+function build_luna-sysservice
 {
     do_fetch openwebos/luna-sysservice $1 luna-sysservice submissions/
 
@@ -1123,7 +1123,7 @@ function build_BrowserServer
 }
 
 #################################
-#  Fetch and build BrowserAdapter 
+#  Fetch and build BrowserAdapter
 #################################
 function build_BrowserAdapter
 {
@@ -1200,9 +1200,41 @@ function build_node-addon
     cp -fd ${LUNA_STAGING}/usr/lib/nodejs/*.node $ROOTFS/usr/palm/nodejs
 }
 
+#########################
+# Fetch and build LevelDB
+#########################
+function build_leveldb
+{
+    LIB_VER=$1
+    LIB_REL=$2
+    LIB_NAME="leveldb"
+
+    mkdir -p $BASE/$LIB_NAME
+    cd $BASE/${LIB_NAME}
+    LIB_TARBALL="$BASE/tarballs/${LIB_NAME}-${LIB_VER}.${LIB_REL}.tar.gz"
+
+    [ ! -f "${LIB_TARBALL}" ] && {
+        wget http://${LIB_NAME}.googlecode.com/files/${LIB_NAME}-${LIB_VER}.${LIB_REL}.tar.gz -O ${LIB_TARBALL} || {
+            echo "Unable to download leveldb"
+            exit 1
+        }
+    }
+
+    tar -xzf ${LIB_TARBALL}
+    cd ${LIB_NAME}-${LIB_VER}.${LIB_REL}
+    make $JOBS
+
+    cp -rf include/${LIB_NAME} ${LUNA_STAGING}/include
+
+    cp -f lib${LIB_NAME}.a ${LUNA_STAGING}/lib
+    cp -f lib${LIB_NAME}.so.${LIB_VER} ${LUNA_STAGING}/lib
+    ln -sf ${LUNA_STAGING}/lib/lib${LIB_NAME}.so.${LIB_VER} ${LUNA_STAGING}/lib/lib${LIB_NAME}.so
+    ln -sf ${LUNA_STAGING}/lib/lib${LIB_NAME}.so.${LIB_VER} ${LUNA_STAGING}/lib/lib${LIB_NAME}.so.1
+}
+
 #####################
 # Fetch and build db8
-##################### 
+#####################
 function build_db8
 {
     do_fetch openwebos/db8 $1 db8 submissions/
@@ -1280,7 +1312,7 @@ function build_activitymanager
     cp -f ../desktop-support/com.palm.activitymanager.json.prv $ROOTFS/usr/share/ls2/roles/prv/com.palm.activitymanager.json
     cp -f ../desktop-support/com.palm.activitymanager.service.pub $ROOTFS/usr/share/ls2/services/com.palm.activitymanager.service
     cp -f ../desktop-support/com.palm.activitymanager.service.prv $ROOTFS/usr/share/ls2/system-services/com.palm.activitymanager.service
-    # Copy db8 files 
+    # Copy db8 files
     cp -rf ../files/db8/kinds/* $ROOTFS/etc/palm/db/kinds/ 2>/dev/null || true
     cp -rf ../files/db8/permissions/* $ROOTFS/etc/palm/db/permissions/ 2>/dev/null || true
 }
@@ -1404,7 +1436,7 @@ function build_luna-universalsearchmgr
     cp -f ../desktop-support/com.palm.universalsearch.service.prv $ROOTFS/usr/share/ls2/system-services/com.palm.universalsearch.service
     mkdir -p "${ROOTFS}/usr/palm/universalsearchmgr/resources/en_us"
     cp -f ../desktop-support/UniversalSearchList.json "${ROOTFS}/usr/palm/universalsearchmgr/resources/en_us"
-    
+
 }
 
 ############################
@@ -1531,7 +1563,7 @@ if [ -d $BASE/luna-sysmgr ] ; then
     rm -f $BASE/luna-sysmgr/luna-desktop-build*.stamp
 fi
 
-## TODO: Remove this temporary fix once pbnjson incremented past 7 
+## TODO: Remove this temporary fix once pbnjson incremented past 7
 if [ -d "$BASE/pbnjson" ] && [ -e "$BASE/pbnjson/luna-desktop-build-7.stamp" ] ; then
     rm -f $BASE/pbnjson/luna-desktop-build-7.stamp
 fi
@@ -1595,6 +1627,7 @@ build node-addon sysbus 25
 build node-addon pmlog 10
 build node-addon dynaload 11
 
+build leveldb 1.9 0
 build db8 63
 build configurator 49
 
