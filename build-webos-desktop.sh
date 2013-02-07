@@ -1657,7 +1657,7 @@ set -x
 
 pre_build
 
-export LSM_TAG="5"
+export LSM_TAG="9"
 if [ ! -d "$BASE/luna-sysmgr" ] || [ ! -d "$BASE/tarballs" ] || [ ! -e "$BASE/tarballs/luna-sysmgr_${LSM_TAG}.zip" ] ; then
     do_fetch openwebos/luna-sysmgr ${LSM_TAG} luna-sysmgr submissions/
 fi
@@ -1694,7 +1694,7 @@ build keyboard-efigs 1.02
 build webappmanager 4
 build luna-init 1.03
 build luna-prefs 1.01
-build luna-sysservice 2
+build luna-sysservice 3
 build librolegen 16
 ##build serviceinstaller 1.01
 build luna-universalsearchmgr 1.00
