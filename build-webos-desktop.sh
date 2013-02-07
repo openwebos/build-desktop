@@ -431,18 +431,45 @@ function build_qt5_module
 
 function build_qt5
 {
-    # The order is important atleast for the first three components
+    ##############################
+    ## Build dependencies are according to Digia
+    ##  http://qt.gitorious.org/qt/qt5/blobs/14b6752894a4760929852d8969d70324d5d19812/build.dependencies
+    ##############################
+
+    ## Build dependencies: "qtbase" => "",
     build_qt5_module qtbase 4eac2c4728da85a5cdf91ec25170b3417f7deb68
+
+    ## Build dependencies: "qtjsbackend" => "qtbase",
     build_qt5_module qtjsbackend b41c2151fdfca3f63a6cd45f6c69ae678694b63e
-    build_qt5_module qtdeclarative 5e4cc79e0669b76f8f5bf5192a0b7001ff8f4d58
+
+    ## Build dependencies: "qtxmlpatterns" => "qtbase
     build_qt5_module qtxmlpatterns d42b8e30e8ac2a33a877d37bd0ffbf616580d7fc
-    # qtscript is needed by the isis webkit to build with qt5. newer webkits do not impose that requirement
+
+    ## Build dependencies: "qtscript" => "qtbase",
     build_qt5_module qtscript e27e5bade2407e022f1814eaaf6cea8bb6741465
+
+    ## Build dependencies: "qtquick1" => "qtbase,qtscript,qtxmlpatterns,...
     build_qt5_module qtquick1 a1ebb0367d8dd02ead0abe4ab9a82c379428666d
-    build_qt5_module qt3d d723769d90331f4cde8dcb5aa3973e5c6bad8753
+
+    ## Build dependencies: "qtdeclarative" => "qtbase,qtxmlpatterns,qtjsbackend,...
+    build_qt5_module qtdeclarative 5e4cc79e0669b76f8f5bf5192a0b7001ff8f4d58
+
+    ## Build dependencies: "qtsensors" => "qtbase,qtdeclarative",
     build_qt5_module qtsensors 6323be3e2fc1b69145f37cda1d0214ec5fa3cb44
+
+    ## Build dependencies: "qt3d" => "qtbase,qtdeclarative",
+    build_qt5_module qt3d d723769d90331f4cde8dcb5aa3973e5c6bad8753
+
+    ## Build dependencies: "qtlocation" => "qtbase,qtdeclarative,qt3d,...
     build_qt5_module qtlocation 0ad2be463848898235abd8ebeebc076042cf398f
+
+    ## Build dependencies: "qtwebkit" => "qtbase,qtscript,qtdeclarative,qtquick1,qtlocation",
     build_qt5_module qtwebkit 1ced62033ffe82134c2f5707b6ef197fa3e85375
+
+    ## Build dependencies: "qtwebkit-examples-and-demos" => "qtwebkit",
+
+    ## Build dependencies: "qtwayland" => "qtbase,qtdeclarative"
+
 }
 
 ################################
