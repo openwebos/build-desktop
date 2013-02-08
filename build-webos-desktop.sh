@@ -1691,7 +1691,7 @@ build luna-sysmgr-common 4
 build luna-sysmgr $LSM_TAG
 build keyboard-efigs 1.02
 
-build webappmanager 4
+build webappmanager 5
 build luna-init 1.03
 build luna-prefs 1.01
 build luna-sysservice 3
