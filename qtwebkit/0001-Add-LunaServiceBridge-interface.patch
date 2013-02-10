@@ -107,6 +107,7 @@ index 0000000..e763655
 +#include <lunaservice.h>
 +#include <stdio.h>
 +#include <stdlib.h>
++#include <unistd.h>
 +#include <wtf/text/CString.h>
 +
 +namespace WebCore {
@@ -366,7 +367,6 @@ index 0000000..e763655
 + */
 +void LunaServiceManager::cancel(LunaServiceManagerListener* inListener)
 +{
-+    bool retVal;
 +    LSError lserror;
 +
 +    if (!inListener || !inListener->listenerToken)
@@ -453,7 +453,7 @@ new file mode 100644
 index 0000000..838ce50
 --- /dev/null
 +++ b/Source/WebCore/platform/webos/PalmServiceBridge.cpp
-@@ -0,0 +1,414 @@
+@@ -0,0 +1,413 @@
 +
 +#include "config.h"
 +#if ENABLE(PALM_SERVICE_BRIDGE)
@@ -696,7 +696,6 @@ index 0000000..838ce50
 +
 +int PalmServiceBridge::call(const String& uri, const String& payload, ExceptionCode& ec)
 +{
-+    const char* callerId = 0;
 +    bool usePrivateBus = false;
 +
 +    JSValue identifier;
@@ -877,7 +876,7 @@ index 0000000..83f723f
 +#ifndef PalmServiceBridge_h
 +#define PalmServiceBridge_h
 +
-+#ifdef ENABLE(PALM_SERVICE_BRIDGE)
++#if ENABLE(PALM_SERVICE_BRIDGE)
 +
 +#include "ActiveDOMObject.h"
 +#include "Event.h"
