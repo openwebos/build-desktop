@@ -707,7 +707,8 @@ function build_luna-sysservice
 
     mkdir -p build
     cd build
-    $CMAKE -D WEBOS_INSTALL_ROOT:PATH=${LUNA_STAGING} ..
+    $CMAKE -DCMAKE_PREFIX_PATH=${LUNA_STAGING}/lib/cmake -DQT_QMAKE_EXECUTABLE=${QMAKE} -D WEBOS_INSTALL_ROOT:PATH=${LUNA_STAGING} ..
+
     make $JOBS
     make install
 
@@ -1210,7 +1211,13 @@ function build_BrowserServer
 {
     do_fetch isis-project/BrowserServer $1 BrowserServer
 
-    cd $BASE/BrowserServer
+    # Make sure alias to moc exists for BrowserServer build
+    # (Could also fix using sed on Makefile.Ubuntu)
+    cd ${LUNA_STAGING}/bin
+    [ -x moc ] || ln -sf moc-palm moc
+
+    set_source_dir $BASE/BrowserServer  $BROWSERSERVER_DIR
+
     export QT_INSTALL_PREFIX=$LUNA_STAGING
     export STAGING_DIR=${LUNA_STAGING}
     export STAGING_INCDIR="${LUNA_STAGING}/include"
@@ -1657,7 +1664,7 @@ set -x
 
 pre_build
 
-export LSM_TAG="9"
+export LSM_TAG="10"
 if [ ! -d "$BASE/luna-sysmgr" ] || [ ! -d "$BASE/tarballs" ] || [ ! -e "$BASE/tarballs/luna-sysmgr_${LSM_TAG}.zip" ] ; then
     do_fetch openwebos/luna-sysmgr ${LSM_TAG} luna-sysmgr submissions/
 fi
@@ -1678,7 +1685,7 @@ build cjson 35
 build pbnjson 7
 build pmloglib 21
 build nyx-lib 58
-build luna-service2 147
+build luna-service2 149
 #build qt4 4
 build_qt5
 build npapi-headers 0.4
@@ -1687,9 +1694,9 @@ build luna-webkit-api 1.01
 
 build luna-sysmgr-ipc 2
 build luna-sysmgr-ipc-messages 2
-build luna-sysmgr-common 4
+build luna-sysmgr-common 6
 build luna-sysmgr $LSM_TAG
-build keyboard-efigs 1.02
+build keyboard-efigs 2
 
 build webappmanager 5
 build luna-init 1.03
@@ -1725,7 +1732,7 @@ build mojoservicelauncher 71
 ## BrowserAdapter 0.4.1 includes (only) desktop-specific changes to build with libpbnjson 7
 #build BrowserAdapter 0.4.1
 
-build nodejs 34
+build nodejs 35
 build node-addon sysbus 25
 build node-addon pmlog 10
 build node-addon dynaload 11
