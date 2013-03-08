@@ -17,7 +17,7 @@
 #
 # LICENSE@@@
 
-VERSION=8.0
+VERSION=9.0
 
 PROCS=`grep -c processor /proc/cpuinfo`
 
@@ -437,22 +437,22 @@ function build_qt5
     ##############################
 
     ## Build dependencies: "qtbase" => "",
-    build_qt5_module qtbase 4eac2c4728da85a5cdf91ec25170b3417f7deb68
+    build_qt5_module qtbase v5.0.1
 
     ## Build dependencies: "qtjsbackend" => "qtbase",
-    build_qt5_module qtjsbackend b41c2151fdfca3f63a6cd45f6c69ae678694b63e
+    build_qt5_module qtjsbackend v5.0.1
 
     ## Build dependencies: "qtxmlpatterns" => "qtbase
-    build_qt5_module qtxmlpatterns d42b8e30e8ac2a33a877d37bd0ffbf616580d7fc
+    build_qt5_module qtxmlpatterns v5.0.1
 
     ## Build dependencies: "qtscript" => "qtbase",
-    build_qt5_module qtscript e27e5bade2407e022f1814eaaf6cea8bb6741465
+    build_qt5_module qtscript v5.0.1
 
     ## Build dependencies: "qtquick1" => "qtbase,qtscript,qtxmlpatterns,...
-    build_qt5_module qtquick1 a1ebb0367d8dd02ead0abe4ab9a82c379428666d
+    build_qt5_module qtquick1 v5.0.1
 
     ## Build dependencies: "qtdeclarative" => "qtbase,qtxmlpatterns,qtjsbackend,...
-    build_qt5_module qtdeclarative 5e4cc79e0669b76f8f5bf5192a0b7001ff8f4d58
+    build_qt5_module qtdeclarative v5.0.1
 
     ## Build dependencies: "qtsensors" => "qtbase,qtdeclarative",
     build_qt5_module qtsensors 6323be3e2fc1b69145f37cda1d0214ec5fa3cb44
@@ -461,7 +461,7 @@ function build_qt5
     build_qt5_module qt3d d723769d90331f4cde8dcb5aa3973e5c6bad8753
 
     ## Build dependencies: "qtlocation" => "qtbase,qtdeclarative,qt3d,...
-    build_qt5_module qtlocation 0ad2be463848898235abd8ebeebc076042cf398f
+    build_qt5_module qtlocation ac83b242c26d5b8750b6bf0f9ed0bac0e4569b6c
 
     ## Build dependencies: "qtwebkit" => "qtbase,qtscript,qtdeclarative,qtquick1,qtlocation",
     build_qt5_module qtwebkit 1ced62033ffe82134c2f5707b6ef197fa3e85375
@@ -1036,6 +1036,8 @@ function build_webappmanager
             rm -rf debug-x86/.moc/moc_*.cpp
             rm -rf debug-x86/.moc/*.moc
         fi
+        sed -i -e 's@settings()->setAttribute(QWebSettings::OfflineWebApplicationCacheEnabled, true);@settings()->setAttribute(QWebSettings::OfflineWebApplicationCacheEnabled, false);@g' Src/webbase/SysMgrWebBridge.cpp
+        sed -i -e 's@settings()->setOfflineWebApplicationCachePath(storagePath);@//settings()->setOfflineWebApplicationCachePath(storagePath);@g' Src/webbase/SysMgrWebBridge.cpp
         $QMAKE
     fi
     make $JOBS -f Makefile.Ubuntu
@@ -1664,7 +1666,7 @@ set -x
 
 pre_build
 
-export LSM_TAG="10"
+export LSM_TAG="17"
 if [ ! -d "$BASE/luna-sysmgr" ] || [ ! -d "$BASE/tarballs" ] || [ ! -e "$BASE/tarballs/luna-sysmgr_${LSM_TAG}.zip" ] ; then
     do_fetch openwebos/luna-sysmgr ${LSM_TAG} luna-sysmgr submissions/
 fi
@@ -1689,14 +1691,14 @@ build luna-service2 149
 #build qt4 4
 build_qt5
 build npapi-headers 0.4
-build luna-webkit-api 1.01
+build luna-webkit-api 2
 #build webkit 0.54
 
 build luna-sysmgr-ipc 2
-build luna-sysmgr-ipc-messages 2
+build luna-sysmgr-ipc-messages 3
 build luna-sysmgr-common 6
 build luna-sysmgr $LSM_TAG
-build keyboard-efigs 2
+build keyboard-efigs 5
 
 build webappmanager 5
 build luna-init 1.03
