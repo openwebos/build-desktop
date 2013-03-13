@@ -342,7 +342,7 @@ function build_qt4
       cd $BASE/qt-build-desktop
       if [ ! -e ../qt4/palm-desktop-configure.orig ] ; then
         cp -f ../qt4/palm-desktop-configure ../qt4/palm-desktop-configure.orig
-        sed -i 's/-opensource/-opensource -qpa -fast -qconfig palm -no-dbus/' ../qt4/palm-desktop-configure
+        sed -i 's/-opensource/-opensource -qpa -fast -qconfig palm -no-dbus -crossarch '$(uname -m)'/' ../qt4/palm-desktop-configure
         sed -i 's/libs tools/libs/' ../qt4/palm-desktop-configure
       fi
       # This export will be picked up by plugins/platforms/platforms.pro and xcb.pro
@@ -1577,7 +1577,7 @@ build pbnjson 7
 build pmloglib 21
 build nyx-lib 58
 build luna-service2 147
-build qt4 4
+build qt4 2
 build npapi-headers 0.4
 build luna-webkit-api 1.01
 build webkit 0.54
