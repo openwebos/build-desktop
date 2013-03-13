@@ -1,7 +1,8 @@
 #!/bin/bash
 # @@@LICENSE
 #
-#      Copyright (c) 2012 - 2013 Hewlett-Packard Development Company, L.P.
+# Copyright (c) 2012-2013 Hewlett-Packard Development Company, L.P.
+# Copyright (c) 2013 LG Electronics
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -1402,6 +1403,30 @@ function build_configurator
     cp -f ../desktop-support/com.palm.configurator.service.prv $ROOTFS/usr/share/ls2/system-services/com.palm.configurator.service
 }
 
+#######################################
+#  Fetch and build smartkey-hun
+#######################################
+function build_smartkey-hun
+{
+    do_fetch openwebos/smartkey-hun $1 smartkey-hun submissions/
+
+    set_source_dir $BASE/smartkey-hun  $SMARTKEY_DIR
+
+    $QMAKE
+    make $JOBS -f Makefile.Ubuntu
+    cp -rf DefaultData "${ROOTFS}/usr/palm/smartkey/"
+
+    if [ -e release-x86/com.palm.smartkey ] ; then
+        cp -f release-x86/com.palm.smartkey "${ROOTFS}/usr/lib/luna/"
+        if [ -d desktop-support ] ; then
+            cp -f desktop-support/com.palm.smartKey.json.pub $ROOTFS/usr/share/ls2/roles/pub/com.palm.smartKey.json
+            cp -f desktop-support/com.palm.smartKey.json.prv $ROOTFS/usr/share/ls2/roles/prv/com.palm.smartKey.json
+            cp -f desktop-support/com.palm.smartKey.service.pub $ROOTFS/usr/share/ls2/services/com.palm.smartKey.service
+            cp -f desktop-support/com.palm.smartKey.service.prv $ROOTFS/usr/share/ls2/system-services/com.palm.smartKey.service
+        fi
+    fi
+}
+
 #################################
 # Fetch and build activitymanager
 #################################
@@ -1666,7 +1691,7 @@ set -x
 
 pre_build
 
-export LSM_TAG="17"
+export LSM_TAG="18"
 if [ ! -d "$BASE/luna-sysmgr" ] || [ ! -d "$BASE/tarballs" ] || [ ! -e "$BASE/tarballs/luna-sysmgr_${LSM_TAG}.zip" ] ; then
     do_fetch openwebos/luna-sysmgr ${LSM_TAG} luna-sysmgr submissions/
 fi
@@ -1691,7 +1716,7 @@ build luna-service2 149
 #build qt4 4
 build_qt5
 build npapi-headers 0.4
-build luna-webkit-api 2
+build luna-webkit-api 3
 #build webkit 0.54
 
 build luna-sysmgr-ipc 2
@@ -1742,6 +1767,7 @@ build node-addon dynaload 11
 build leveldb 1.9 0
 build db8 63
 build configurator 49
+build smartkey-hun 2
 
 build activitymanager 110
 build pmstatemachineengine 13

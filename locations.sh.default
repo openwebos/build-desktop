@@ -142,6 +142,8 @@ function post_build
 
 # export SERVICEINSTALLER_DIR="${BASE}/serviceinstaller"
 
+# export SMARTKEY_DIR="${BASE}/smartkey-hun"
+
 # export WEBAPPMANAGER_DIR="${BASE}/webappmanager"
 
 # export WEBKITSUPPLEMENTAL_DIR="${BASE}/WebKitSupplemental"

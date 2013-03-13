@@ -187,7 +187,7 @@ USR_SBIN_DIR="${STAGING_DIR}/usr/sbin"
 ETC_DIR="${STAGING_DIR}/etc"
 # NOTE: this links to ROOTFS/usr/lib/luna which is what the role and service files refer to
 SERVICE_BIN_DIR="/usr/lib/luna"
-STATIC_SERVICES="LunaSysService filecache activitymanager mojodb-luna LunaUniversalSearchMgr"
+STATIC_SERVICES="LunaSysService filecache activitymanager mojodb-luna LunaUniversalSearchMgr com.palm.smartkey"
 
 # TODO: Consider moving ls2 dir to traditional locations (requires changes to scripts AND .conf files)
 CONF_DIR="${ROOTFS}/etc"
