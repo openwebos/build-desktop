@@ -1403,6 +1403,30 @@ function build_configurator
     cp -f ../desktop-support/com.palm.configurator.service.prv $ROOTFS/usr/share/ls2/system-services/com.palm.configurator.service
 }
 
+##########################
+# Fetch and build hunspell
+##########################
+function build_hunspell
+{
+    LIB_VER=$1
+    LIB_REL=$2
+    LIB_NAME="hunspell"
+
+    mkdir -p $BASE/$LIB_NAME
+    cd $BASE/$LIB_NAME
+    LIB_TARBALL="$BASE/tarballs/${LIB_NAME}-${LIB_VER}.${LIB_REL}.tar.gz"
+
+    [ ! -f "${LIB_TARBALL}" ] && {
+        wget http://downloads.sourceforge.net/${LIB_NAME}/${LIB_NAME}-${LIB_VER}.${LIB_REL}.tar.gz -O ${LIB_TARBALL}
+    }
+
+    tar xvzf ${LIB_TARBALL}
+    cd ${LIB_NAME}-${LIB_VER}.${LIB_REL}
+    ./configure --prefix=${LUNA_STAGING}
+    make
+    make install
+}
+
 #######################################
 #  Fetch and build smartkey-hun
 #######################################
@@ -1414,7 +1438,17 @@ function build_smartkey-hun
 
     $QMAKE
     make $JOBS -f Makefile.Ubuntu
-    cp -rf DefaultData "${ROOTFS}/usr/palm/smartkey/"
+    cd DefaultData
+    mkdir -p "${ROOTFS}/usr/palm/smartkey"
+    mkdir -p "${ROOTFS}/usr/palm/smartkey/DefaultData"
+    mkdir -p "${ROOTFS}/var/palm/smartkey"
+    mkdir -p "${ROOTFS}/var/palm/smartkey/DefaultData"
+    cp -rf autoreplace-hc "${ROOTFS}/usr/palm/smartkey/DefaultData/autoreplace-hc"
+    cp -rf locale "${ROOTFS}/usr/palm/smartkey/DefaultData/locale"
+    cp -rf manufacturer "${ROOTFS}/usr/palm/smartkey/DefaultData/manufacturer"
+    cp -rf whitelist "${ROOTFS}/usr/palm/smartkey/DefaultData/whitelist"
+    cp -rf hunspell "${ROOTFS}/usr/palm/smartkey/hunspell"
+    cp -rf autoreplace "${ROOTFS}/var/palm/smartkey/DefaultData/autoreplace"
 
     if [ -e release-x86/com.palm.smartkey ] ; then
         cp -f release-x86/com.palm.smartkey "${ROOTFS}/usr/lib/luna/"
@@ -1767,6 +1801,7 @@ build node-addon dynaload 11
 build leveldb 1.9 0
 build db8 63
 build configurator 49
+build hunspell 1.3 2
 build smartkey-hun 2
 
 build activitymanager 110
