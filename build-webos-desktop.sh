@@ -1449,6 +1449,7 @@ function build_smartkey-hun
     cp -rf whitelist "${ROOTFS}/usr/palm/smartkey/DefaultData/whitelist"
     cp -rf hunspell "${ROOTFS}/usr/palm/smartkey/hunspell"
     cp -rf autoreplace "${ROOTFS}/var/palm/smartkey/DefaultData/autoreplace"
+    cd ..
 
     if [ -e release-x86/com.palm.smartkey ] ; then
         cp -f release-x86/com.palm.smartkey "${ROOTFS}/usr/lib/luna/"
