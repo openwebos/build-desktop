@@ -44,6 +44,8 @@ Prerequisites
 
         $ sudo apt-get build-dep qt4-qmake
 
+        $ sudo apt-get gdb "^libxcb.*" libx11-xcb-dev libglu1-mesa-dev libxrender-dev hunspell
+
   * The components listed above are valid for both Ubuntu 11.04 and 12.04, except for libxcb-icccm1-dev which is libxcb-icccm4-dev on 12.04
 
   * CMake version 2.8.7 will be fetched and used for the build; there is no need to install it.
