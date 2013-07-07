@@ -29,6 +29,18 @@ export SCRIPT_DIR=$PWD
 
 source ./webos-desktop-common.sh
 
+if [ -z "$BASE" ]; then
+    echo "You have a problem with your local.sh script which is"
+    echo "preventing install-luna-sysmgr.sh from locating your"
+    echo "binaries.  Please correct the problem and try again."
+    exit
+fi
+
+if [ $EUID -ne 0 ]; then
+    echo "This script must be run as root."
+    exit
+fi
+
 if [ "$1" = "--help" ] ; then
     echo "Usage: sudo ./install-luna-sysmgr.sh [OPTION]"
     echo "Installs the luna-sysmgr component and its dependencies."
