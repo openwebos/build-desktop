@@ -26,7 +26,11 @@
 ##  This has been the default target location for build-desktop since its initial creation
 ##
 
-export BASE="${HOME}/luna-desktop-binaries"
+if [ -z "${SUDO_USER}" ]; then
+  export BASE="${HOME}/luna-desktop-binaries"
+else
+  export BASE="$(getent passwd ${SUDO_USER} | grep -o [^:]*:[^:]*$ | grep -o ^[^:]*)/luna-desktop-binaries"
+fi
 
 
 #########################################
