@@ -1555,7 +1555,7 @@ set -x
 
 pre_build
 
-export LSM_TAG="5"
+export LSM_TAG="13"
 if [ ! -d "$BASE/luna-sysmgr" ] || [ ! -d "$BASE/tarballs" ] || [ ! -e "$BASE/tarballs/luna-sysmgr_${LSM_TAG}.zip" ] ; then
     do_fetch openwebos/luna-sysmgr ${LSM_TAG} luna-sysmgr submissions/
 fi
@@ -1563,35 +1563,30 @@ if [ -d $BASE/luna-sysmgr ] ; then
     rm -f $BASE/luna-sysmgr/luna-desktop-build*.stamp
 fi
 
-## TODO: Remove this temporary fix once pbnjson incremented past 7
-if [ -d "$BASE/pbnjson" ] && [ -e "$BASE/pbnjson/luna-desktop-build-7.stamp" ] ; then
-    rm -f $BASE/pbnjson/luna-desktop-build-7.stamp
-fi
-
 # Build a local version of cmake 2.8.7 so that cmake-modules-webos doesn't have to write to the OS-supplied CMake modules directory
 build cmake
 build cmake-modules-webos 12
 
 build cjson 35
-build pbnjson 7
-build pmloglib 21
+build pbnjson 14
+build pmloglib 22
 build nyx-lib 58
-build luna-service2 147
+build luna-service2 150
 build qt4 4
 build npapi-headers 0.4
-build luna-webkit-api 1.01
+build luna-webkit-api 3
 build webkit 0.54
 
 build luna-sysmgr-ipc 2
-build luna-sysmgr-ipc-messages 2
-build luna-sysmgr-common 4
+build luna-sysmgr-ipc-messages 3
+build luna-sysmgr-common 11
 build luna-sysmgr $LSM_TAG
-build keyboard-efigs 1.02
+build keyboard-efigs 12
 
-build webappmanager 4
-build luna-init 1.03
+build webappmanager 5
+build luna-init 1.04
 build luna-prefs 1.01
-build luna-sysservice 2
+build luna-sysservice 3
 build librolegen 16
 ##build serviceinstaller 1.01
 build luna-universalsearchmgr 1.00
@@ -1604,10 +1599,10 @@ build core-apps 2
 build isis-browser 0.21
 build isis-fonts v0.1
 
-build foundation-frameworks 1.0
+build foundation-frameworks 1.0.1
 build mojoservice-frameworks 1.0
 build loadable-frameworks 1.0.1
-build app-services 1.02
+build app-services 1.03
 build mojolocation-stub 2
 build pmnetconfigmanager-stub 3
 
@@ -1617,18 +1612,16 @@ build mojoservicelauncher 71
 
 build WebKitSupplemental 0.4
 build AdapterBase 0.2
-# BrowserServer 0.7.1 includes (only) desktop-specific changes to build with libpbnjson 7
-build BrowserServer 0.7.1
-# BrowserAdapter 0.4.1 includes (only) desktop-specific changes to build with libpbnjson 7
+build BrowserServer 0.7.2
 build BrowserAdapter 0.4.1
 
 build nodejs 34
-build node-addon sysbus 25
+build node-addon sysbus 26
 build node-addon pmlog 10
 build node-addon dynaload 11
 
 build leveldb 1.9 0
-build db8 63
+build db8 74
 build configurator 49
 
 build activitymanager 110
