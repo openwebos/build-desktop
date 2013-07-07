@@ -1734,20 +1734,15 @@ if [ -d $BASE/luna-sysmgr ] ; then
     rm -f $BASE/luna-sysmgr/luna-desktop-build*.stamp
 fi
 
-## TODO: Remove this temporary fix once pbnjson incremented past 7
-if [ -d "$BASE/pbnjson" ] && [ -e "$BASE/pbnjson/luna-desktop-build-7.stamp" ] ; then
-    rm -f $BASE/pbnjson/luna-desktop-build-7.stamp
-fi
-
 # Build a local version of cmake 2.8.7 so that cmake-modules-webos doesn't have to write to the OS-supplied CMake modules directory
 build cmake
 build cmake-modules-webos 12
 
 build cjson 35
-build pbnjson 7
-build pmloglib 21
+build pbnjson 14
+build pmloglib 22
 build nyx-lib 58
-build luna-service2 149
+build luna-service2 150
 #build qt4 4
 build_qt5
 build npapi-headers 0.4
@@ -1756,12 +1751,12 @@ build luna-webkit-api 3
 
 build luna-sysmgr-ipc 2
 build luna-sysmgr-ipc-messages 3
-build luna-sysmgr-common 8
+build luna-sysmgr-common 11
 build luna-sysmgr $LSM_TAG
-build keyboard-efigs 5
+build keyboard-efigs 12
 
 build webappmanager 5
-build luna-init 1.03
+build luna-init 1.04
 build luna-prefs 1.01
 build luna-sysservice 3
 build librolegen 16
@@ -1776,10 +1771,10 @@ build core-apps 2
 #build isis-browser 0.21
 build isis-fonts v0.1
 
-build foundation-frameworks 1.0
+build foundation-frameworks 1.0.1
 build mojoservice-frameworks 1.0
 build loadable-frameworks 1.0.1
-build app-services 1.02
+build app-services 1.03
 build mojolocation-stub 2
 build pmnetconfigmanager-stub 3
 
@@ -1800,10 +1795,10 @@ build node-addon pmlog 10
 build node-addon dynaload 11
 
 build leveldb 1.9 0
-build db8 63
+build db8 72 #74
 build configurator 49
 build hunspell 1.3 2
-build smartkey-hun 2
+build smartkey-hun 6
 
 build activitymanager 110
 build pmstatemachineengine 13
