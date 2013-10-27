@@ -16,44 +16,19 @@ How to Build on Ubuntu Linux
 
 Prerequisites
 -------------
-
   * Ensure you have a fast and reliable internet connection since you'll be downloading about 500MB
-
   * Ensure you have at least 4GB of available disk space
+  * Install dependencies needed to build (and run) Open webOS on the desktop by running the following script:
 
-  * Install the following components needed to build (and run) Open webOS on the desktop by typing the following:
+        $ ./prerequisites.sh
 
-        $ sudo apt-get update
-
-        $ sudo apt-get install git git-core pkg-config make autoconf libtool g++ \
-		tcl unzip libyajl-dev libyajl1 qt4-qmake libsqlite3-dev curl
-
-        $ sudo apt-get install gperf bison libglib2.0-dev libssl-dev libxi-dev \
-		libxrandr-dev libxfixes-dev libxcursor-dev libfreetype6-dev \
-		libxinerama-dev libgl1-mesa-dev libgstreamer0.10-dev \
-		libgstreamer-plugins-base0.10-dev flex libicu-dev
-
-        $ sudo apt-get install libboost-system-dev libboost-filesystem-dev \
-		libboost-regex-dev libboost-program-options-dev liburiparser-dev \
-		libc-ares-dev libsigc++-2.0-dev libglibmm-2.4-dev libdb4.8-dev \
-		libcurl4-openssl-dev
-
-        $ sudo apt-get install xcb libx11-xcb-dev libxcb-sync0-dev \
-		libxcb1-dev libxcb-keysyms1-dev libxcb-image0-dev libxcb-render-util0-dev \
-		libxcb-icccm1-dev
-
-        $ sudo apt-get build-dep qt4-qmake
-
-  * The components listed above are valid for both Ubuntu 11.04 and 12.04, except for libxcb-icccm1-dev which is libxcb-icccm4-dev on 12.04
-
-  * CMake version 2.8.7 will be fetched and used for the build; there is no need to install it.
+Note that CMake version 2.8.7 will automatically be fetched and used for the build. There is no need to install it.
 
 
 Downloading
 -----------
 
 Download the zip file and unzip it into an empty directory or better yet, "git clone" the repository.
-
 
 Building Open webOS
 -------------------
