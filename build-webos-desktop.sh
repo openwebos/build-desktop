@@ -140,7 +140,7 @@ do_fetch() {
 
     fi
 
-    ZIPFILE="${BASE}/tarballs/`basename ${1}`_${2}.zip"
+    ZIPFILE="${BASE}/tarballs/`basename ${1}`_${2//\//_}.zip"
 
     # if building from a tag, remove any cached "master" zipball to force it to be re-fetched
     if [ "${2}" != "master" ] ; then
@@ -1475,14 +1475,14 @@ function build
         BUILD_DIR=$1
     fi
     if [ $SKIPSTUFF -eq 0 ] || [ ! -d $BASE/$BUILD_DIR ] || \
-       [ ! -e $BASE/$BUILD_DIR/luna-desktop-build-$2.stamp ] ; then
+       [ ! -e $BASE/$BUILD_DIR/luna-desktop-build-${2//\//_}.stamp ] ; then
         echo
         echo "Building ${BUILD_DIR} ..."
         echo
         time build_$1 $2 $3 $4
         echo
         if [ -d $BASE/$BUILD_DIR ] ; then
-            touch $BASE/$BUILD_DIR/luna-desktop-build-$2.stamp
+            touch $BASE/$BUILD_DIR/luna-desktop-build-${2//\//_}.stamp
         fi
         return
     fi
